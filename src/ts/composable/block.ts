@@ -1,4 +1,5 @@
-import {ComponentPublicInstance} from 'vue';
+export * from '@/composable/block/events';
+
 import Block from '@/models/block';
 import {ComponentMap} from '@/types/vue/component';
 
@@ -7,15 +8,6 @@ export function getBlockClasses(block?: Block) {
         'block',
         `block-${block?.getType()}`
     ];
-}
-
-export function getBlockProps<T extends typeof Block>(type: T) {
-    return {
-        block: {
-            type: type,
-            required: true
-        }
-    }
 }
 
 export function getComponentMap(merge: ComponentMap = {}) {

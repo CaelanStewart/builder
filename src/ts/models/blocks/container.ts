@@ -1,4 +1,4 @@
-import Block, {AnyBlockData, BlockOptions} from '@/models/block';
+import Block, {AnyBlockData, BlockCapabilities, BlockOptions, HasChildren} from '@/models/block';
 import BlockList, {BlockListData} from '@/models/block/block-list';
 
 export interface ContainerBlockOptions extends BlockOptions {
@@ -10,7 +10,7 @@ export interface ContainerBlockData extends BlockListData {
     options?: ContainerBlockOptions;
 }
 
-export default class ContainerBlock extends BlockList {
+export default class ContainerBlock extends BlockList implements HasChildren {
     static readonly type = 'container';
 
     public readonly data: ContainerBlockData;

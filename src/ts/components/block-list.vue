@@ -6,7 +6,7 @@
 
 <script lang="ts">
     import {defineComponent, ref, PropType} from 'vue';
-    import {getComponentMap} from '@/api/components/block';
+    import {getComponentMap} from '@/composable/block';
     import Block from '@/models/block';
     import {ComponentMap} from '@/types/vue/component';
 

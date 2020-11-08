@@ -7,5 +7,11 @@ export interface BlockListData extends BlockData {
 export default abstract class BlockList extends Block {
     public readonly abstract data: BlockListData;
 
+    public static readonly defaultCapabilities = {
+        ...Block.defaultCapabilities,
+        haveChildren: true,
+        sortChildren: true
+    };
+
     public abstract children: Block[];
 }

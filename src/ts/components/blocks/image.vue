@@ -1,28 +1,33 @@
 <template>
-    <div :class="classes">
-        <img :src="block.image.getSrc()" :loading="block.getOption('lazy')" />
-    </div>
+    <abstract-block :block="block">
+        <img :src="block.image.getSrc()" :loading="block.getOption('lazy')" :alt="alt" />
+    </abstract-block>
 </template>
 
 <script lang="ts">
-    import {defineComponent, computed} from 'vue';
-    import {getBlockClasses} from '@/api/components/block';
+    // Modules
+    import {defineComponent, computed, PropType} from 'vue';
+
+    // Models
     import ImageBlock from '@/models/blocks/image';
+
+    // Components
+    import AbstractBlock from '@/components/abstract-block.vue';
 
     export default defineComponent({
         name: 'block-image',
 
+        components: {AbstractBlock},
+
         props: {
-            block: ImageBlock
+            block: ImageBlock as PropType<ImageBlock>
         },
 
         setup(props) {
-            const classes = computed(() => [
-                ...getBlockClasses(props.block)
-            ]);
+            const alt = computed(() => props.block?.getProp('alt') ?? '');
 
             return {
-                classes
+                alt
             }
         }
     });

@@ -1,11 +1,23 @@
-import Model, {ModelData} from '@/lib/model';
 import ContainerBlock, {ContainerBlockData} from '@/models/blocks/container';
+import Block, {BlockData, BlockOptions} from '@/models/block';
 
-export interface BuilderData extends ModelData {
-    container?: ContainerBlockData;
+export interface EditMode {
+    // permissions?: {
+    //     remove?: boolean;
+    //     edit: boolean;
+    // }
 }
 
-export default class Builder extends Model {
+export interface BuilderOptions extends BlockOptions {
+    // editMode?: EditMode;
+}
+
+export interface BuilderData extends BlockData {
+    container?: ContainerBlockData;
+    options?: BuilderOptions;
+}
+
+export default class Builder extends Block {
     public readonly data: BuilderData;
 
     public container: ContainerBlock|null = null;

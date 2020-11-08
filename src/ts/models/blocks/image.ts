@@ -2,12 +2,14 @@ import Block, {BlockData, BlockOptions} from '@/models/block';
 import Image, {ImageModelData} from '@/models/media/image';
 
 export interface ImageBlockOptions extends BlockOptions {
-    lazy?: boolean;
+
 }
 
 export interface ImageBlockData extends BlockData {
     image: ImageModelData|null;
     options?: ImageBlockOptions;
+    lazy?: boolean;
+    alt?: string;
 }
 
 export default class ImageBlock extends Block {

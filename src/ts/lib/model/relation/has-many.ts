@@ -1,6 +1,6 @@
 import Relation, {RelationOptions} from '@/lib/model/relation';
 import Model, {ModelDataType} from '@/lib/model';
-import {array_remove} from '@/lib/functions/array';
+import {arrayRemove} from '@/lib/functions/array';
 
 export interface HasManyRelationOptions<T extends typeof Model> extends RelationOptions<T> {
     defaultData?(): Data<T>;
@@ -66,10 +66,10 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
     }
 
     remove(item: InstanceType<T>) {
-        if (array_remove(this.value, item)) {
+        if (arrayRemove(this.value, item)) {
             const parentData = this.getDataFromParent() as Data<T>;
 
-            array_remove(parentData, item.getData());
+            arrayRemove(parentData, item.getData());
         } else {
             this.warn('Data integrity warning: tried to remove an item that does not exist in the value', item);
         }

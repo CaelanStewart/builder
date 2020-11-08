@@ -1,5 +1,3 @@
-import {App} from 'vue';
-
 // Models
 import * as Models from '@/models';
 import Block from '@/models/block';

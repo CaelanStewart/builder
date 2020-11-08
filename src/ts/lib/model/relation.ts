@@ -3,7 +3,7 @@ import Model, {
     RelationsObject,
     ModelDataType
 } from '@/lib/model';
-import {is_subtype} from '@/lib/functions/type';
+import {isSubtype} from '@/lib/functions/type';
 import Morph, {TypeMap} from '@/lib/model/relation/morph';
 
 export type RelationValueType<T extends typeof Model,
@@ -145,7 +145,7 @@ export default class Relation<T extends typeof Model> {
     }
 
     public validateType(type: any): type is T {
-        return is_subtype(this.type, type);
+        return isSubtype(this.type, type);
     }
 
     protected defineAccessor() {
