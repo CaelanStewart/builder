@@ -15,8 +15,8 @@ I'd like to see a multi-purpose layout/page builder that satisfies the following
  - Is easily extensible
  - Is easy to use, and has multiple editing modes (with the possibility of defining custom edit modes):
     - "text only editing" - which allows only changing text and imagery
-    - "basic editing"
-    - "advanced"
+    - "basic editing" - which allows basic editing/hiding/addition/removal of blocks
+    - "advanced" - which allows full access to edit the layout, margins, paddings, responsiveness breakpoints, colours etc.
  - Permissions can be defined hierarchically for each and every element/option
  - Customisable responsiveness
  - Mobile-first, using Bulma for the style framework
