@@ -1,8 +1,11 @@
+import {cloneDeep} from 'lodash';
+import Data from '@/lib/model/data';
 import Relation, {RelationOptions} from '@/lib/model/relation';
 import HasOne, {HasOneRelationOptions} from '@/lib/model/relation/has-one';
 import HasMany, {HasManyRelationOptions} from '@/lib/model/relation/has-many';
 import MorphOne, {MorphOneRelationOptions} from '@/lib/model/relation/morph-one';
 import MorphMany, {MorphManyRelationOptions} from '@/lib/model/relation/morph-many';
+import Historian from '@/lib/model/historian';
 
 export interface ModelData {
     _type?: string;
@@ -20,18 +23,18 @@ type LocalRelationOptions<T extends typeof Model, O extends RelationOptions<T>, 
     Omit<O, 'type' | 'parent'> & {name: NT, prop?: PT};
 
 export default class Model {
-    public readonly data: ModelData;
+    public readonly data: Data<ModelData>;
     public readonly relations: RelationsObject = {};
 
-    constructor(data: ModelData) {
-        this.data = data;
+    constructor(data: ModelData, historian: Historian) {
+        this.data = new Data<ModelData>(data, historian);
 
         this.updateTypeString();
     }
 
     protected updateTypeString(): void {
         // Ensure type string is always present
-        this.data._type = this.constructor.name;
+        this.data.set('_type', this.constructor.name);
     }
 
     setProp<T extends this, D extends T['data'], P extends keyof D>(this: T, prop: P, value: D[P]) {
@@ -50,12 +53,8 @@ export default class Model {
     //     return this.data;
     // }
 
-    get $() {
-        return this.getData();
-    }
-
-    getData<T extends this>(this: T): T['data'] {
-        return this.data;
+    getData(): this['data'] {
+        return cloneDeep(this.data);
     }
 
     hasOne<T extends typeof Model,
