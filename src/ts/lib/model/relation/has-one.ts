@@ -5,11 +5,11 @@ export interface HasOneRelationOptions<T extends typeof Model> extends RelationO
     //
 }
 
-export type Value<T extends typeof Model> = InstanceType<T>|null;
-export type Data<T extends typeof Model> = ModelDataType<T>|null;
+export type ValueType<T extends typeof Model> = InstanceType<T>|null;
+export type DataType<T extends typeof Model> = ModelDataType<T>|null;
 
 export default class HasOne<T extends typeof Model> extends Relation<T> {
-    protected value: Value<T>;
+    protected value: ValueType<T>;
 
     constructor(options: HasOneRelationOptions<T>) {
         super(options);
@@ -17,8 +17,8 @@ export default class HasOne<T extends typeof Model> extends Relation<T> {
         this.value = this.buildValueFromData();
     }
 
-    protected buildValueFromData(): Value<T> {
-        const data = this.resolveData() as Data<T>;
+    protected buildValueFromData(): ValueType<T> {
+        const data = this.resolveData() as DataType<T>;
 
         return data
             ? this.createModel(data)
@@ -27,25 +27,25 @@ export default class HasOne<T extends typeof Model> extends Relation<T> {
 
     protected buildDataFromValue(): ModelDataType<T>|null {
         if (this.value) {
-            return this.value.getData();
+            return this.value.data.getMutableReferenceToData() as ModelDataType<T>;
         }
 
         return null;
     }
 
-    protected isValidData(data: unknown): data is Data<T> {
+    protected isValidData(data: any): data is DataType<T> {
         return data === null || (data && typeof data === 'object');
     }
 
-    protected getEmptyData(): Data<T> {
+    protected getEmptyData(): DataType<T> {
         return null;
     }
 
-    getValue(): Value<T> {
-        return super.getValue() as Value<T>;
+    getValue(): ValueType<T> {
+        return super.getValue() as ValueType<T>;
     }
 
-    setValue(value: Value<T>) {
+    setValue(value: ValueType<T>) {
         super.setValue(value);
     }
 }

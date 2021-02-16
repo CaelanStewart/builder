@@ -24,7 +24,7 @@
         },
 
         setup(props) {
-            const alt = computed(() => props.block?.getProp('alt') ?? '');
+            const alt = computed(() => props.block?.getOption('alt') ?? '');
 
             return {
                 alt

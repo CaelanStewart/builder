@@ -16,8 +16,8 @@ export type RelationValueTypes<T extends typeof Model, R extends RelationsObject
 };
 
 // Base Value and Data types
-type Value<T extends typeof Model> = InstanceType<T> | InstanceType<T>[] | null;
-type Data<T extends typeof Model> = ModelDataType<T> | ModelDataType<T>[] | null;
+type ValueType<T extends typeof Model> = InstanceType<T> | InstanceType<T>[] | null;
+type DataType<T extends typeof Model> = ModelDataType<T> | ModelDataType<T>[] | null;
 
 export interface RelationOptions<T extends typeof Model> {
     parent: Model;
@@ -26,7 +26,7 @@ export interface RelationOptions<T extends typeof Model> {
     prop?: string;
     relations?: Partial<RelationValueTypes<T>>;
 
-    defaultData?(): Data<T>;
+    defaultData?(): DataType<T>;
 }
 
 export default class Relation<T extends typeof Model> {
@@ -35,9 +35,9 @@ export default class Relation<T extends typeof Model> {
     protected name: string;
     protected prop?: string;
     protected relations?: Partial<RelationValueTypes<T>>;
-    protected value: Value<T>;
+    protected value: ValueType<T>;
     protected types: TypeMap = {};
-    protected defaultData?: () => Data<T>;
+    protected defaultData?: () => DataType<T>;
 
     constructor({parent, type, name, prop, relations}: RelationOptions<T>) {
         this.parent = parent;
@@ -50,23 +50,23 @@ export default class Relation<T extends typeof Model> {
         this.defineAccessor();
     }
 
-    protected buildValueFromData(): Value<T> {
+    protected buildValueFromData(): ValueType<T> {
         throw new Error('This method must be overridden on derived classes');
     }
 
-    protected buildDataFromValue(): Data<T> {
+    protected buildDataFromValue(): DataType<T> {
         throw new Error('This method must be overridden in derived classes');
     }
 
-    protected isValidData(data: unknown): data is Data<T> {
+    protected isValidData(data: unknown): data is DataType<T> {
         throw new Error('This method must be overridden on derived classes');
     }
 
-    protected getEmptyData(): Data<T> {
+    protected getEmptyData(): DataType<T> {
         throw new Error('This method must be overridden on derived classes');
     }
 
-    protected getDefaultData(): Data<T> {
+    protected getDefaultData(): DataType<T> {
         if (this.defaultData) {
             return this.defaultData();
         }
@@ -88,7 +88,7 @@ export default class Relation<T extends typeof Model> {
         console.warn(this.message('Warning', message), ...log);
     }
 
-    public buildData(): Data<T> {
+    public buildData(): DataType<T> {
         // Cast to any because the base getDataFromValue method's return type is the union of all derivatives.
         // The type checking when specifying the prop should catch any misnomers.
         return this.buildDataFromValue();
@@ -98,11 +98,11 @@ export default class Relation<T extends typeof Model> {
         return this.prop;
     }
 
-    public getValue(): Value<T> {
+    public getValue(): ValueType<T> {
         return this.value;
     }
 
-    public setValue(value: Value<T>) {
+    public setValue(value: ValueType<T>) {
         this.value = value;
 
         this.updateParentData();
@@ -110,19 +110,19 @@ export default class Relation<T extends typeof Model> {
 
     protected updateParentData(): void {
         if (this.prop) {
-            this.parent.setProp(this.prop as any, this.buildData());
+            this.parent.data.set(this.prop as any, this.buildData());
         }
     }
 
     protected getDataFromParent(): unknown {
         if (this.prop) {
-            return this.parent.getProp(this.prop as any);
+            return this.parent.data.get(this.prop as any);
         }
 
         return undefined;
     }
 
-    protected resolveData(): Data<T> {
+    protected resolveData(): DataType<T> {
         let data = this.getDataFromParent();
 
         if (data === undefined) {
@@ -132,7 +132,7 @@ export default class Relation<T extends typeof Model> {
         return this.validateData(data);
     }
 
-    protected validateData(data: unknown): Data<T> {
+    protected validateData(data: unknown): DataType<T> {
         if (this.isValidData(data)) {
             return data;
         }
@@ -150,14 +150,14 @@ export default class Relation<T extends typeof Model> {
 
     protected defineAccessor() {
         Object.defineProperty(this.parent, this.name, {
-            set: (value: Value<T>) => this.setValue(value),
+            set: (value: ValueType<T>) => this.setValue(value),
             get: () => this.getValue()
         });
     }
 
     protected createModel(data: ModelDataType<T>): InstanceType<T> {
         const type = this.resolveType(data);
-        const model = new type(data) as InstanceType<T>;
+        const model = new type(data, this.parent.data.getHistorian()) as InstanceType<T>;
 
         this.assignRelationsFromParent(model);
 

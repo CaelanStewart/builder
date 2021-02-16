@@ -1,21 +1,19 @@
-import Block, {BlockData, BlockOptions} from '@/models/block';
-import Image, {ImageModelData} from '@/models/media/image';
+import Block, {IBlockData, IBlockOptions, Historian, Data} from '@/models/block';
+import Image, {IImageData} from '@/models/media/image';
 
-export interface ImageBlockOptions extends BlockOptions {
-
-}
-
-export interface ImageBlockData extends BlockData {
-    image: ImageModelData|null;
-    options?: ImageBlockOptions;
+export interface IImageBlockOptions extends IBlockOptions {
     lazy?: boolean;
     alt?: string;
 }
 
-export default class ImageBlock extends Block {
+export interface IImageBlockData extends IBlockData {
+    image: IImageData|null;
+    options?: IImageBlockOptions;
+}
+
+export default class ImageBlock<MD extends Data<IImageBlockData> = IImageBlockData> extends Block<MD> {
     static readonly type = 'image';
 
-    public readonly data: ImageBlockData;
     public image: Image|null = null;
 
     public readonly relations = {
@@ -26,20 +24,14 @@ export default class ImageBlock extends Block {
         })
     }
 
-    constructor(data: ImageBlockData) {
-        super(data);
-
-        this.data = data;
-    }
-
-    public getDefaultOptions(): ImageBlockOptions {
+    public getDefaultOptions(): IImageBlockOptions {
         return {
             ...super.getDefaultOptions(),
             lazy: true
         };
     }
 
-    getSrc(): string {
-        return this.image?.getSrc() ?? '';
+    getSrc() {
+        return this.image?.getSrc();
     }
 }

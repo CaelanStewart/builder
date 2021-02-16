@@ -1,14 +1,16 @@
+import Historian from '@/lib/model/historian';
 import Builder from '@/models/builder';
 import ContainerBlock from '@/models/blocks/container';
 import ImageBlock from '@/models/blocks/image';
 
 export function createDemoBuilderModel(): Builder {
-    const builder = new Builder({});
+    const history = new Historian;
+    const builder = new Builder({}, history);
 
-    builder.container = new ContainerBlock({});
+    builder.container = builder.makeBlock(ContainerBlock, {});
 
     builder.container.children = [
-        new ImageBlock({
+        builder.makeBlock(ImageBlock, {
             image: {
                 src: './src/images/demo.png'
             }

@@ -3,7 +3,7 @@ import * as Models from '@/models';
 import Block from '@/models/block';
 
 // Modules
-import Morph from '@/lib/model/relation/morph';
+import Morph, {TypeMap} from '@/lib/model/relation/morph';
 
 // Components
 import Builder from '@/components/builder.vue';
@@ -16,7 +16,9 @@ export {
     Builder
 }
 
-Morph.setDefaultTypeMap(Models);
+Morph.setDefaultTypeMap({
+    ...Models
+});
 
 Block.setComponentMap(getDefaultBlockComponentMap());
 

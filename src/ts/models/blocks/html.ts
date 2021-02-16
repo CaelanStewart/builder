@@ -1,24 +1,16 @@
-import Block, {BlockData, BlockOptions} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Historian, Data} from '@/models/block';
 
-export interface HtmlBlockOptions extends BlockOptions {
+export interface IHtmlBlockOptions extends IBlockOptions {
     //
 }
 
-export interface HtmlBlockData extends BlockData {
-    options?: HtmlBlockOptions;
+export interface IHtmlBlockData extends IBlockData {
+    options?: IHtmlBlockOptions;
     html: string;
 }
 
-export default class Html extends Block {
-    public readonly data: HtmlBlockData;
-
-    constructor(data: HtmlBlockData) {
-        super(data);
-
-        this.data = data;
-    }
-
-    getHtml(): string {
-        return this.data.html;
+export default class HtmlBlock<MD extends Data<IHtmlBlockData> = IHtmlBlockData> extends Block<MD> {
+    getHtml() {
+        return this.data.get('html');
     }
 }

@@ -1,11 +1,7 @@
-import Data from '@/lib/model/data';
+import DataController from '@/lib/model/data-controller';
 
 interface AnyObject {
     [key: string]: any;
-}
-
-interface AnyArray extends Array<any> {
-
 }
 
 export interface Action {
@@ -22,7 +18,7 @@ export interface ActionSet extends Action {
 
 export interface ActionSplice extends Action {
     type: 'splice';
-    array: AnyArray;
+    array: any[];
     index: number;
     deleted: any[];
     inserted: any[];
@@ -118,7 +114,7 @@ export class Almanac {
 export default class Historian {
     private readonly almanac: Almanac;
 
-    constructor(size: number) {
+    constructor(size: number = 50) {
         this.almanac = new Almanac(size);
     }
 

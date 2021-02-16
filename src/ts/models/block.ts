@@ -1,22 +1,25 @@
-import Model, {ModelData} from '@/lib/model';
-import {ImageBlockData} from '@/models/blocks/image';
-import {ContainerBlockData} from '@/models/blocks/container';
+import Model, {IModelData, DataController, Historian, InstanceDataType, Data, ModelDataType} from '@/lib/model';
+import {IImageBlockData} from '@/models/blocks/image';
+import {IContainerBlockData} from '@/models/blocks/container';
 import {ComponentMap} from '@/types/vue/component';
 
-export interface HasChildren {
-    children: Block[];
+type BlockOptionsType<M extends Block> = Required<InstanceDataType<M>['options']>;
+type BlockOptionType<M extends Block, K extends keyof BlockOptionsType<M>> = BlockOptionsType<M>[K];
+
+export interface IHasChildren<T extends Block = Block> {
+    children: T[];
 }
 
-export interface BlockOptions {
-    //
+export interface IBlockOptions {
+    disabled?: boolean;
 }
 
-export interface BlockData extends ModelData {
+export interface IBlockData extends IModelData {
     class?: string[];
-    options?: BlockOptions;
+    options?: IBlockOptions;
 }
 
-export interface BlockCapabilities {
+export interface IBlockCapabilities {
     haveChildren: boolean;
     sortChildren: boolean;
 
@@ -24,21 +27,21 @@ export interface BlockCapabilities {
     edit: true;
 }
 
-export type AnyBlockData = ContainerBlockData | ImageBlockData;
+export type TAnyBlockData = IContainerBlockData | IImageBlockData;
 
-export default class Block extends Model {
+export {DataController, Historian, Data};
+
+export default class Block<MD extends Data<IBlockData> = IBlockData> extends Model<MD> {
     protected static componentMap: ComponentMap = {};
 
     static readonly type: string = 'block';
 
-    public readonly data: BlockData;
-
     public parent: Block | null = null;
 
     //
-    public readonly capabilities: BlockCapabilities;
+    public readonly capabilities: IBlockCapabilities;
 
-    public static readonly defaultCapabilities: BlockCapabilities = {
+    public static readonly defaultCapabilities: IBlockCapabilities = {
         haveChildren: false,
 
         sortChildren: false,
@@ -53,14 +56,14 @@ export default class Block extends Model {
         })
     }
 
-    constructor(data: BlockData) {
-        super(data);
+    constructor(data: MD, history: Historian) {
+        super(data, history);
 
         data.options = {
-            ...this.getDefaultOptions()
+            ...this.getDefaultOptions(),
+            ...data.options
         }
 
-        this.data = data;
         this.capabilities = this.resolveBlockCapabilities();
     }
 
@@ -70,25 +73,27 @@ export default class Block extends Model {
         }
     }
 
-    public getDefaultOptions(): BlockOptions {
+    public getDefaultOptions(): MD['options'] {
         return {};
     }
 
-    public getOptions<O extends Required<this['data']>['options']>(): O {
-        return this.data.options as O;
+    public getOptions(): MD['options'] {
+        return this.data.get('options');
     }
 
-    public getOption<O extends Required<this['data']>['options'], K extends keyof O>(name: K): O[K] | undefined {
-        if (name in this.getOptions()) {
-            return (this.getOptions() as O)[name];
+    public getOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K): O[K] | undefined {
+        const options = this.getOptions() as O;
+
+        if (options && (name in options)) {
+            return options[name];
         }
     }
 
-    public setOption<O extends Required<this['data']>['options'], K extends keyof O>(name: K, value: O[K]): void {
+    public setOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K, value: O[K]): void {
         (this.getOptions() as O)[name] = value;
     }
 
-    public setManyOptions(options: Partial<this['data']>): void {
+    public setManyOptions(options: Partial<MD['options']>): void {
         for (const key in options) {
             if (options.hasOwnProperty(key)) {
                 this.setOption(key, options[key]);
@@ -106,5 +111,13 @@ export default class Block extends Model {
 
     public static getComponentMap(): ComponentMap {
         return this.componentMap;
+    }
+
+    public makeBlock<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}) {
+        const block = this.makeModel(model, data);
+
+        block.setManyOptions(options);
+
+        return block;
     }
 }

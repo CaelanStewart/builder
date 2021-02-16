@@ -1,19 +1,11 @@
-import Model, {ModelData} from '@/lib/model';
+import Model, {IModelData, Historian, Data} from '@/lib/model';
 
-export interface ImageModelData extends ModelData {
+export interface IImageData extends IModelData {
     src: string;
 }
 
-export default class Image extends Model {
-    public readonly data: ImageModelData;
-
-    constructor(data: ImageModelData) {
-        super(data);
-
-        this.data = data;
-    }
-
-    public getSrc(): string {
-        return this.$.src;
+export default class Image<MD extends Data<IImageData> = IImageData> extends Model<MD> {
+    public getSrc() {
+        return this.data.get('src');
     }
 }
