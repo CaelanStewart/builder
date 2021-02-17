@@ -1,4 +1,3 @@
-import {cloneDeep} from 'lodash';
 import DataController from '@/lib/model/data-controller';
 import Relation, {RelationOptions} from '@/lib/model/relation';
 import HasOne, {HasOneRelationOptions} from '@/lib/model/relation/has-one';
@@ -24,11 +23,15 @@ export interface RelationsObject {
     [name: string]: Relation<typeof Model>
 }
 
-type LocalRelationOptions<T extends typeof Model, O extends RelationOptions<T>, NT, PT> =
-    Omit<O, 'type' | 'parent'> & {name: NT, prop?: PT};
+type LocalRelationOptions<T extends typeof Model, O extends RelationOptions<T>, SELF extends Model, MD extends IModelData> =
+    Omit<O, 'type' | 'parent'> & {name: keyof SELF, prop?: keyof MD};
 
 export {DataController, Historian, Relation};
 
+/**
+ * Base Model class, used for hierarchical organisation of data models. Contains logic specific to handling of the
+ * directly relevant data.
+ */
 export default class Model<MD extends IModelData = IModelData> {
     public readonly data: DataController<MD>;
     public readonly relations: RelationsObject = {};
@@ -44,23 +47,42 @@ export default class Model<MD extends IModelData = IModelData> {
         this.data.set('_type', this.constructor.name);
     }
 
+    /**
+     * Returns a deep clone of the Model's data object by default.
+     *
+     * @see DataController.prototype.getMutableReferenceToData() - to get a mutable reference to the original data
+     * object. This is not recommended unless you plan only to read the contents en mass, as any changes to the object
+     * will not be detected by the DataController and hence will not add a history state, and may even break the
+     * history state.
+     */
     getData() {
         return this.data.getData();
     }
 
-    // $<T extends this, D extends T['data'], P extends keyof D>(this: T, prop: P): D[P] {
-    //     return this.getProp<T, D, P>(prop);
-    // }
+    /**
+     * Get a property of the Model's data object.
+     *
+     * @param prop
+     */
+    getProp<P extends keyof MD>(prop: P): MD[P] {
+        return this.data.get(prop);
+    }
 
-    // $<T extends this>(this: T): T['data'] {
-    //     return this.data;
-    // }
+    hasRelation<T extends typeof Model, R extends typeof Relation, O extends RelationOptions<T>>
+    (relation: R, type: T, options: LocalRelationOptions<T, O, this, MD>): InstanceType<R> {
+        return new relation({
+            type,
+            parent: this,
+            name: options.name,
+            prop: options.prop
+        }) as InstanceType<R>
+    }
 
     hasOne<T extends typeof Model>
-    (type: T, options: LocalRelationOptions<T, HasOneRelationOptions<T>, keyof this, keyof MD>): HasOne<T> {
+    (type: T, options: LocalRelationOptions<T, HasOneRelationOptions<T>, this, MD>): HasOne<T> {
         return new HasOne<T>({
             ...options,
-            type: type as T,
+            type,
             parent: this,
             name: options.name,
             prop: options.prop
@@ -68,7 +90,7 @@ export default class Model<MD extends IModelData = IModelData> {
     }
 
     hasMany<T extends typeof Model>
-    (type: T, options: LocalRelationOptions<T, HasManyRelationOptions<T>, keyof this, keyof MD>): HasMany<T> {
+    (type: T, options: LocalRelationOptions<T, HasManyRelationOptions<T>, this, MD>): HasMany<T> {
         return new HasMany<T>({
             ...options,
             type,
@@ -79,7 +101,7 @@ export default class Model<MD extends IModelData = IModelData> {
     }
 
     morphOne<T extends typeof Model>
-    (options: LocalRelationOptions<T, MorphOneRelationOptions<T>, keyof this, keyof MD>): MorphOne<T> {
+    (options: LocalRelationOptions<T, MorphOneRelationOptions<T>, this, MD>): MorphOne<T> {
         return new MorphOne<T>({
             ...options,
             parent: this,
@@ -89,7 +111,7 @@ export default class Model<MD extends IModelData = IModelData> {
     }
 
     morphMany<T extends typeof Model>
-    (options: LocalRelationOptions<T, MorphManyRelationOptions<T>, keyof this, keyof MD>): MorphMany<T> {
+    (options: LocalRelationOptions<T, MorphManyRelationOptions<T>, this, MD>): MorphMany<T> {
         return new MorphMany<T>({
             ...options,
             parent: this,

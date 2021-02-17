@@ -113,7 +113,7 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         return this.componentMap;
     }
 
-    public makeBlock<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}) {
+    public makeBlock<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}): InstanceType<M> {
         const block = this.makeModel(model, data);
 
         block.setManyOptions(options);

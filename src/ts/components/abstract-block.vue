@@ -13,7 +13,7 @@
     import {defineComponent, computed} from 'vue';
 
     // Composable
-    import {getBlockClasses, detectMouseOver} from '@/composable/block';
+    import {getBlockClasses, useDetectMouseOver} from '@/composable/block';
 
     // Models
     import Block from '@/models/block';
@@ -35,8 +35,10 @@
                 ...getBlockClasses(props.block)
             ]);
 
+            const detectMouseOver = useDetectMouseOver();
+
             return {
-                ...detectMouseOver(),
+                ...detectMouseOver,
                 classes
             }
         }

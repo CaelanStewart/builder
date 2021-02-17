@@ -1,6 +1,6 @@
 import {ref} from 'vue';
 
-export function detectMouseOver() {
+export function useDetectMouseOver() {
     const element = ref<HTMLElement|null>(null);
     const isMouseOver = ref(false);
 

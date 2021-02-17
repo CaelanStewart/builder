@@ -1,5 +1,5 @@
 import ContainerBlock, {IContainerBlockData} from '@/models/blocks/container';
-import Block, {IBlockData, IBlockOptions, Data} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Data, Historian} from '@/models/block';
 
 export interface EditMode {
     // permissions?: {
@@ -8,16 +8,16 @@ export interface EditMode {
     // }
 }
 
-export interface BuilderOptions extends IBlockOptions {
+export interface IBuilderOptions extends IBlockOptions {
     // editMode?: EditMode;
 }
 
-export interface BuilderData extends IBlockData {
+export interface IBuilderData extends IBlockData {
     container?: IContainerBlockData;
-    options?: BuilderOptions;
+    options?: IBuilderOptions;
 }
 
-export default class Builder<MD extends Data<BuilderData> = BuilderData> extends Block<MD> {
+export default class Builder<MD extends Data<IBuilderData> = IBuilderData> extends Block<MD> {
     public container: ContainerBlock|null = null;
 
     relations = {
@@ -26,5 +26,9 @@ export default class Builder<MD extends Data<BuilderData> = BuilderData> extends
             name: 'container',
             prop: 'container'
         })
+    }
+
+    static makeBuilder<D extends IBuilderData>(data: D, history: Historian = new Historian): Builder<D> {
+        return new Builder<D>(data, history);
     }
 }

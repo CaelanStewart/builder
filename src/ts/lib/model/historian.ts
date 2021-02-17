@@ -21,7 +21,7 @@ export interface ActionSplice extends Action {
     array: any[];
     index: number;
     deleted: any[];
-    inserted: any[];
+    items: any[];
 }
 
 export const isSetAction = (action: Action): action is ActionSet => action.type === 'set';
@@ -161,7 +161,7 @@ export default class Historian {
     }
 
     protected undoSplice(action: ActionSplice): void {
-        action.array.splice(action.index, action.inserted.length, ...action.deleted);
+        action.array.splice(action.index, action.items.length, ...action.deleted);
     }
 
     protected redoSet(action: ActionSet): void {
@@ -169,7 +169,7 @@ export default class Historian {
     }
 
     protected redoSplice(action: ActionSplice): void {
-        action.array.splice(action.index, action.deleted.length, ...action.inserted);
+        action.array.splice(action.index, action.deleted.length, ...action.items);
     }
 
     protected undoAction(action: Action): void {

@@ -44,26 +44,38 @@ export default class DataController<T extends IModelData = IModelData> {
         });
     }
 
-    push<AT extends any, P extends keyof T, V extends T[P] & AT[]>(prop: P, ...items: V[number][]): void {
+    /**
+     * Splice an array in data under the given prop.
+     *
+     * @param prop
+     * @param index - If null, the array length will be used, to essentially mediate a "push" operation
+     * @param deleteCount
+     * @param items
+     */
+    splice<AT extends any, P extends keyof T, V extends T[P] & AT[]>(prop: P, index: number | null, deleteCount: number, ...items: V[number][]): V[number][] {
         const array = this.data[prop];
 
         if (Array.isArray(array)) {
-            array.push(...items);
-        } else {
-            console.log(this);
-            throw new TypeError('Cannot push to a value in data that is not an array. Values logged: this');
-        }
-    }
+            index = index ?? array.length;
 
-    splice<AT extends any, P extends keyof T, V extends T[P] & AT[]>(prop: P, index: number, deleteCount: number, ...items: V[number][]): void {
-        const array = this.data[prop];
+            const deleted = array.splice(index, deleteCount, ...items);
 
-        if (Array.isArray(array)) {
-            array.splice(index, deleteCount, ...items);
+            this.historian.recordSplice({
+                array,
+                index,
+                deleted,
+                items
+            });
+
+            return deleted;
         } else {
             console.log(this);
             throw new TypeError('Cannot splice a value in data that is not an array. Values logged: this');
         }
+    }
+
+    push<AT extends any, P extends keyof T, V extends T[P] & AT[]>(prop: P, ...items: V[number][]): void {
+        this.splice(prop, null, 0, ...items);
     }
 
     deleteIndex<AT extends any, P extends keyof T, V extends T[P] & AT[]>(prop: P, index: number, deleteCount: number = 1): void {

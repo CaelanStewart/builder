@@ -4,10 +4,13 @@ import ContainerBlock from '@/models/blocks/container';
 import ImageBlock from '@/models/blocks/image';
 
 export function createDemoBuilderModel(): Builder {
-    const history = new Historian;
-    const builder = new Builder({}, history);
+    const builder = Builder.makeBuilder({
+        //
+    });
 
-    builder.container = builder.makeBlock(ContainerBlock, {});
+    builder.container = builder.makeBlock(ContainerBlock, {
+        //
+    });
 
     builder.container.children = [
         builder.makeBlock(ImageBlock, {
