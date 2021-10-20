@@ -20,11 +20,8 @@ export interface IBlockData extends IModelData {
 }
 
 export interface IBlockCapabilities {
-    haveChildren: boolean;
-    sortChildren: boolean;
-
     move: boolean;
-    edit: true;
+    edit: boolean;
 }
 
 export type TAnyBlockData = IContainerBlockData | IImageBlockData;
@@ -38,13 +35,7 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
 
     public parent: Block | null = null;
 
-    //
-    public readonly capabilities: IBlockCapabilities;
-
-    public static readonly defaultCapabilities: IBlockCapabilities = {
-        haveChildren: false,
-
-        sortChildren: false,
+    public readonly capabilities: IBlockCapabilities = {
         move: true,
         edit: true
     };
@@ -63,14 +54,10 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
             ...this.getDefaultOptions(),
             ...data.options
         }
-
-        this.capabilities = this.resolveBlockCapabilities();
     }
 
-    protected resolveBlockCapabilities(): this['capabilities'] {
-        return {
-            ...this.resolveBlockCapabilities()
-        }
+    public can<K extends keyof this['capabilities']>(capability: K): this['capabilities'][K] {
+        return this['capabilities'][capability as keyof IBlockCapabilities] as unknown as this['capabilities'][K];
     }
 
     public getDefaultOptions(): MD['options'] {

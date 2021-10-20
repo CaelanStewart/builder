@@ -1,11 +1,28 @@
 import DataController from '@/lib/model/data-controller';
+import {flatten} from 'lodash';
 
 interface AnyObject {
     [key: string]: any;
 }
 
+export type ActionTypeMap = {
+    set: ActionSet;
+    delete: ActionDelete;
+    splice: ActionSplice;
+    transaction: ActionTransaction;
+}
+
+export type ActionTypeName = keyof ActionTypeMap;
+
 export interface Action {
-    type: 'set' | 'splice';
+    type: ActionTypeName;
+}
+
+export interface ActionDelete extends Action {
+    type: 'delete';
+    object: AnyObject;
+    prop: string;
+    oldValue: any;
 }
 
 export interface ActionSet extends Action {
@@ -22,6 +39,11 @@ export interface ActionSplice extends Action {
     index: number;
     deleted: any[];
     items: any[];
+}
+
+export interface ActionTransaction extends Action {
+    type: 'transaction';
+    actions: Action[];
 }
 
 export const isSetAction = (action: Action): action is ActionSet => action.type === 'set';
@@ -59,7 +81,7 @@ export class Almanac {
         this.pointer = this.size - 1;
     }
 
-    public commit<A extends Action>(entry: A): void {
+    public commit(entry: Action): void {
         this.sanityCheck();
 
         if (this.isPast()) {
@@ -111,25 +133,60 @@ export class Almanac {
     }
 }
 
+type Transaction = Action[];
+type Transactions = Transaction[];
+
 export default class Historian {
     private readonly almanac: Almanac;
+
+    private readonly transactions: Transactions = [];
+
+    private transactionIndex: number = -1;
 
     constructor(size: number = 50) {
         this.almanac = new Almanac(size);
     }
 
-    public recordSet(entry: Omit<ActionSet, 'type'>): void {
-        this.almanac.commit<ActionSet>({
-            type: 'set',
+    public record<TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>(type: TypeName, entry: Omit<ActionType, 'type'>): void {
+        const action = {
+            type,
             ...entry
-        });
+        };
+
+        if (this.transactionIndex === -1) {
+            this.transactions[this.transactionIndex].push(action)
+        } else {
+            this.almanac.commit(action);
+        }
     }
 
-    public recordSplice(entry: Omit<ActionSplice, 'type'>): void {
-        this.almanac.commit<ActionSplice>({
-            type: 'splice',
-            ...entry
-        });
+    public transaction(executor: () => any) {
+        const transaction: Transaction = [];
+
+        this.transactions.push(transaction);
+        ++this.transactionIndex;
+
+        try {
+            executor();
+
+            // If we're at the top (given the above increment) then we need to
+            // commit this transaction which has executed without exceptions.
+            if (this.transactionIndex === 1) {
+                this.record('transaction', {
+                    actions: flatten(transaction)
+                })
+            }
+        } catch (error) {
+            // Undo this current level of transaction here, allowing the rethrown
+            // error to be caught, and a higher-order transaction to continue.
+            this.undoTransaction(transaction);
+
+            // Allow error to be dealt with or to propagate up to any parent transactions
+            throw error;
+        } finally {
+            // Always decrement the counter
+            --this.transactionIndex;
+        }
     }
 
     public undo(): boolean {
@@ -170,6 +227,12 @@ export default class Historian {
 
     protected redoSplice(action: ActionSplice): void {
         action.array.splice(action.index, action.deleted.length, ...action.items);
+    }
+
+    protected undoTransaction(transaction: Transaction): void {
+        for (const action of transaction) {
+            this.undoAction(action);
+        }
     }
 
     protected undoAction(action: Action): void {

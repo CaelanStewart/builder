@@ -15,10 +15,18 @@ export default class DataController<T extends IModelData = IModelData> {
         return this.historian;
     }
 
+    /**
+     * Get the data – returns a deep-copy of the data.
+     *
+     * @see {DataController.prototype.getMutableReferenceToData} – If this is too slow, use this method.
+     */
     getData() {
         return this.getCloneOfData();
     }
 
+    /**
+     * Only use this if you only ever intend to read the data.
+     */
     getMutableReferenceToData() {
         return this.data;
     }
@@ -36,11 +44,23 @@ export default class DataController<T extends IModelData = IModelData> {
 
         this.data[prop] = newValue;
 
-        this.historian.recordSet({
+        this.historian.record('set', {
             object: this.data,
             prop: prop as string,
             oldValue,
             newValue
+        })
+    }
+
+    delete(prop: keyof T): void {
+        const oldValue = this.data[prop];
+
+        delete this.data[prop];
+
+        this.historian.record('delete', {
+            object: this.data,
+            prop: prop as string,
+            oldValue
         });
     }
 
@@ -60,7 +80,7 @@ export default class DataController<T extends IModelData = IModelData> {
 
             const deleted = array.splice(index, deleteCount, ...items);
 
-            this.historian.recordSplice({
+            this.historian.record('splice', {
                 array,
                 index,
                 deleted,

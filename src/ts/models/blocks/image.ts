@@ -1,4 +1,4 @@
-import Block, {IBlockData, IBlockOptions, Historian, Data} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Historian, Data, IBlockCapabilities} from '@/models/block';
 import Image, {IImageData} from '@/models/media/image';
 
 export interface IImageBlockOptions extends IBlockOptions {
@@ -35,3 +35,4 @@ export default class ImageBlock<MD extends Data<IImageBlockData> = IImageBlockDa
         return this.image?.getSrc();
     }
 }
+

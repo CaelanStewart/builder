@@ -4,7 +4,11 @@ import Block, {
     IHasChildren,
     Data
 } from '@/models/block';
-import BlockList, {IBlockListData} from '@/models/block/block-list';
+import BlockList, {IBlockListCapabilities, IBlockListData} from '@/models/block/block-list';
+
+export interface IContainerBlockCapabilities extends IBlockListCapabilities {
+    //
+}
 
 export interface IContainerBlockOptions extends IBlockOptions {
     //
@@ -20,11 +24,15 @@ export default class ContainerBlock<MD extends Data<IContainerBlockData> = ICont
 
     public children: Block[] = [];
 
-    relations = {
+    readonly relations = {
         ...super.relations,
         children: this.morphMany({
             name: 'children',
             prop: 'children'
         })
+    }
+
+    public test() {
+        this.can('editChildren');
     }
 }
