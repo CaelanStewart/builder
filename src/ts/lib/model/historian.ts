@@ -1,5 +1,5 @@
-import DataController from '@/lib/model/data-controller';
-import {flatten} from 'lodash';
+import {arrayRemoveAll} from '@/lib/functions/array';
+import Almanac from '@/lib/model/historian/almanac';
 
 interface AnyObject {
     [key: string]: any;
@@ -43,105 +43,82 @@ export interface ActionSplice extends Action {
 
 export interface ActionTransaction extends Action {
     type: 'transaction';
-    actions: Action[];
+    stack: TransactionStack;
 }
 
-export const isSetAction = (action: Action): action is ActionSet => action.type === 'set';
-export const isSpliceAction = (action: Action): action is ActionSplice => action.type === 'splice';
-
-export type ActionList = (Action|undefined)[];
-
-export class Almanac {
-    private readonly size: number;
-    private entries: ActionList;
-    private pointer: number;
-
-    constructor(size: number) {
-        this.size = size;
-        this.entries = Almanac.makeEntries(size);
-        this.pointer = size - 1;
-    }
-
-    public isPast(): boolean {
-        return this.pointer === this.size - 1;
-    }
-
-    private static makeEntries(size: number): ActionList {
-        return Array(size).fill(undefined);
-    }
-
-    private normalizeHistory(): void {
-        // Save all entries up to the current pointer index
-        const slice = this.entries.slice(0, this.pointer + 1);
-
-        // Create the remainder to preserve the history size
-        const remainder = Almanac.makeEntries(this.size - slice.length);
-
-        this.entries = remainder.concat(slice);
-        this.pointer = this.size - 1;
-    }
-
-    public commit(entry: Action): void {
-        this.sanityCheck();
-
-        if (this.isPast()) {
-            this.normalizeHistory();
-        }
-
-        this.pushEntry(entry);
-    }
-
-    private pushEntry(entry: Action) {
-        this.entries.push(entry);
-
-        // Remove the first element to keep the history length constant
-        this.entries.shift();
-    }
-
-    public back(): Action|undefined {
-        if (this.pointer > 0) {
-            --this.pointer;
-
-            return this.getCurrent();
-        }
-    }
-
-    public forward(): Action|undefined {
-        if (this.pointer < this.size - 1) {
-            ++this.pointer;
-
-            return this.getCurrent();
-        }
-    }
-
-    public getCurrent(): Action|undefined {
-        return this.entries[this.pointer];
-    }
-
-    public get(): Action|undefined {
-        return this.entries[this.pointer];
-    }
-
-    public getSize(): number {
-        return this.size;
-    }
-
-    public sanityCheck(): void {
-        if (this.size !== this.entries.length) {
-            throw new Error('[Almanac]: Sanity check failed - actual Alamanac size does not equal configured size');
-        }
-    }
-}
+export type ActionList = (Action | undefined)[];
 
 type Transaction = Action[];
-type Transactions = Transaction[];
+type TransactionStack = Transaction[];
+
+type ActionTransformer<ActionType extends Action> = (this: Historian, action: ActionType) => any;
+
+type ActionTransformerMap = {
+    [TypeName in ActionTypeName]: ActionTransformer<ActionTypeMap[TypeName]>;
+};
+
+type Undo = -1;
+type Redo = 1;
+
+type Direction = Undo | Redo;
+
+type DirectionTransformerMap = {
+    [K in Direction]: ActionTransformerMap;
+};
+
+/**
+ * Type predicate for an action.
+ *
+ * @param type
+ * @param entry
+ */
+export const isAction = <TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>
+    (type: TypeName, entry: Action): entry is ActionType => entry.type === type;
+
+const UNDO: Undo = -1;
+const REDO: Redo = 1;
 
 export default class Historian {
     private readonly almanac: Almanac;
 
-    private readonly transactions: Transactions = [];
+    private readonly transactions: TransactionStack = [];
 
     private transactionIndex: number = -1;
+
+    private readonly transformers: DirectionTransformerMap = {
+        [UNDO]: {
+            set(action) {
+                action.object[action.prop] = action.oldValue;
+            },
+            splice(action) {
+                action.array.splice(action.index, action.items.length, ...action.deleted);
+            },
+            delete(action) {
+                action.object[action.prop] = action.oldValue;
+            },
+            transaction(action) {
+                for (const transaction of action.stack) {
+                    this.applyTransaction(UNDO, transaction);
+                }
+            }
+        },
+        [REDO]: {
+            set(action) {
+                action.object[action.prop] = action.newValue;
+            },
+            splice(action) {
+                action.array.splice(action.index, action.deleted.length, ...action.items);
+            },
+            delete(action) {
+                delete action.object[action.prop];
+            },
+            transaction(action) {
+                for (const transaction of action.stack) {
+                    this.applyTransaction(REDO, transaction);
+                }
+            }
+        }
+    }
 
     constructor(size: number = 50) {
         this.almanac = new Almanac(size);
@@ -154,9 +131,9 @@ export default class Historian {
         };
 
         if (this.transactionIndex === -1) {
-            this.transactions[this.transactionIndex].push(action)
-        } else {
             this.almanac.commit(action);
+        } else {
+            this.transactions[this.transactionIndex].push(action);
         }
     }
 
@@ -169,23 +146,24 @@ export default class Historian {
         try {
             executor();
 
+            --this.transactionIndex;
+
             // If we're at the top (given the above increment) then we need to
             // commit this transaction which has executed without exceptions.
-            if (this.transactionIndex === 1) {
+            if (this.transactionIndex === 0) {
                 this.record('transaction', {
-                    actions: flatten(transaction)
+                    stack: arrayRemoveAll(this.transactions)
                 })
             }
         } catch (error) {
             // Undo this current level of transaction here, allowing the rethrown
             // error to be caught, and a higher-order transaction to continue.
-            this.undoTransaction(transaction);
+            this.applyTransaction(UNDO, transaction);
+
+            --this.transactionIndex;
 
             // Allow error to be dealt with or to propagate up to any parent transactions
             throw error;
-        } finally {
-            // Always decrement the counter
-            --this.transactionIndex;
         }
     }
 
@@ -193,7 +171,7 @@ export default class Historian {
         const action = this.almanac.back();
 
         if (action) {
-            this.undoAction(action);
+            this.applyAction(UNDO, action);
 
             return true;
         }
@@ -205,7 +183,7 @@ export default class Historian {
         const action = this.almanac.forward();
 
         if (action) {
-            this.redoAction(action);
+            this.applyAction(REDO, action);
 
             return true;
         }
@@ -213,41 +191,14 @@ export default class Historian {
         return false;
     }
 
-    protected undoSet(action: ActionSet): void {
-        action.object[action.prop] = action.oldValue;
+    private applyAction(direction: Direction, action: Action) {
+        (this.transformers[direction][action.type] as ActionTransformer<Action>)
+            .call(this, action);
     }
 
-    protected undoSplice(action: ActionSplice): void {
-        action.array.splice(action.index, action.items.length, ...action.deleted);
-    }
-
-    protected redoSet(action: ActionSet): void {
-        action.object[action.prop] = action.newValue;
-    }
-
-    protected redoSplice(action: ActionSplice): void {
-        action.array.splice(action.index, action.deleted.length, ...action.items);
-    }
-
-    protected undoTransaction(transaction: Transaction): void {
+    private applyTransaction(direction: Direction, transaction: Transaction) {
         for (const action of transaction) {
-            this.undoAction(action);
-        }
-    }
-
-    protected undoAction(action: Action): void {
-        if (isSetAction(action)) {
-            this.undoSet(action);
-        } else if (isSpliceAction(action)) {
-            this.undoSplice(action);
-        }
-    }
-
-    protected redoAction(action: Action): void {
-        if (isSetAction(action)) {
-            this.redoSet(action);
-        } else if (isSpliceAction(action)) {
-            this.redoSplice(action);
+            this.applyAction(direction, action);
         }
     }
 }

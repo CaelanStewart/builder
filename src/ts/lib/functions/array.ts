@@ -5,3 +5,7 @@ export function arrayRemove<I extends any, A extends I[]>(array: A, item: I): I|
         return array.splice(index, 1)[0];
     }
 }
+
+export function arrayRemoveAll<T>(array: T[], ...items: T[]): T[] {
+    return array.splice(0, array.length, ...items);
+}
