@@ -12,7 +12,7 @@
     import ImageBlock from '@/models/blocks/image';
 
     // Components
-    import AbstractBlock from '@/components/abstract-block.vue';
+    import AbstractBlock from '@/components/abstract-blocks/abstract-block.vue';
 
     export default defineComponent({
         name: 'block-image',

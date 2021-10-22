@@ -19,7 +19,7 @@
     import Block from '@/models/block';
 
     // Components
-    import UiToolbar from './block/toolbar.vue';
+    import UiToolbar from '@/components/block/toolbar.vue';
 
     export default defineComponent({
         name: 'abstract-block',

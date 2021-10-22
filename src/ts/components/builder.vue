@@ -7,7 +7,7 @@
 <script lang="ts">
     import {defineComponent} from 'vue';
     import Builder from '@/models/builder';
-    import ContainerBlock from '@/components/blocks/container';
+    import ContainerBlock from '@/components/blocks/container.vue';
 
     export default defineComponent({
         name: 'builder',

@@ -71,7 +71,7 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
     public getOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K): O[K] | undefined {
         const options = this.getOptions() as O;
 
-        if (options && (name in options)) {
+        if (options) {
             return options[name];
         }
     }

@@ -12,8 +12,8 @@
     import ContainerBlock from '@/models/blocks/container';
 
     // Components
-    import BlockList from '@/components/block-list.vue';
-    import AbstractBlock from '@/components/abstract-block.vue';
+    import BlockList from '@/components/abstract-blocks/block-list.vue';
+    import AbstractBlock from '@/components/abstract-blocks/abstract-block.vue';
 
     export default defineComponent({
         name: 'block-container',

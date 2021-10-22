@@ -25,7 +25,7 @@
             }
         },
 
-        created() {
+        beforeCreate() {
             this.$options.components = {
                 ...this.$options.components,
                 ...getComponentMap()

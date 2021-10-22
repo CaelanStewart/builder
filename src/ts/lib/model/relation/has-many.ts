@@ -11,7 +11,6 @@ export type Data<T extends typeof Model> = ModelDataType<T>[];
 
 export default class HasMany<T extends typeof Model> extends Relation<T> {
     protected value: Value<T>;
-    protected defaultData?: () => Data<T>;
 
     constructor(options: HasManyRelationOptions<T>) {
         super(options);
