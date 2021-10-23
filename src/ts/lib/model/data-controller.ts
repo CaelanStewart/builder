@@ -4,11 +4,38 @@ import Historian from '@/lib/model/historian';
 
 export default class DataController<T extends IModelData = IModelData> {
     private readonly data: T;
+    private readonly proxy: T;
     private readonly historian: Historian;
 
     constructor(data: T, historian: Historian) {
         this.data = data;
+        this.proxy = this.createProxy();
         this.historian = historian;
+    }
+
+    createProxy() {
+        return new Proxy(this.data, {
+            set: (target: T, p: string | symbol, value: any): boolean => {
+                this.set(p as keyof T, value);
+
+                return true;
+            },
+            defineProperty(): boolean {
+                console.warn('defineProperty is forbidden on Proxy to Model data object');
+
+                return false;
+            },
+            deleteProperty: (target: T, p: string | symbol): boolean => {
+                this.delete(p as keyof T);
+
+                return true;
+            },
+            preventExtensions(): boolean {
+                console.warn('defineProperty is forbidden on Proxy to Model data object');
+
+                return false;
+            }
+        })
     }
 
     getHistorian() {
@@ -40,16 +67,34 @@ export default class DataController<T extends IModelData = IModelData> {
     }
 
     set<P extends keyof T>(prop: P, newValue: T[P]): void {
-        const oldValue = this.data[prop];
+        if (prop in this.data) {
+            const oldValue = this.data[prop];
 
-        this.data[prop] = newValue;
+            this.data[prop] = newValue;
 
-        this.historian.record('set', {
-            object: this.data,
-            prop: prop as string,
-            oldValue,
-            newValue
-        })
+            this.historian.record('set', {
+                object: this.data,
+                prop: prop as string,
+                oldValue,
+                newValue
+            });
+        } else {
+            // Differentiate between setting the value of a property and creating one so
+            // that the keys that exist in an object after an undo match the original.
+            this.historian.record('create', {
+                object: this.data,
+                prop: prop as string,
+                newValue
+            })
+        }
+    }
+
+    setMany(data: Partial<T>): void {
+        this.historian.transaction(() => {
+            for (const prop in data) {
+                this.set(prop, data[prop] as any);
+            }
+        });
     }
 
     delete(prop: keyof T): void {

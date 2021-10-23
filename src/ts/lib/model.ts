@@ -5,6 +5,7 @@ import HasMany, {HasManyRelationOptions} from '@/lib/model/relation/has-many';
 import MorphOne, {MorphOneRelationOptions} from '@/lib/model/relation/morph-one';
 import MorphMany, {MorphManyRelationOptions} from '@/lib/model/relation/morph-many';
 import Historian from '@/lib/model/historian';
+import {tap} from '@/lib/functions';
 
 export interface IModelData {
     _type?: string;
@@ -35,9 +36,15 @@ export {DataController, Historian, Relation};
 export default class Model<MD extends IModelData = IModelData> {
     public readonly data: DataController<MD>;
     public readonly relations: RelationsObject = {};
+    private historian: Historian;
+
+    public readonly $: IModelData;
 
     constructor(data: MD, history: Historian) {
+        this.historian = history;
         this.data = new DataController<MD>(data, history);
+
+        this.$ = this.data.createProxy();
 
         this.updateTypeString();
     }
@@ -68,7 +75,23 @@ export default class Model<MD extends IModelData = IModelData> {
         return this.data.get(prop);
     }
 
-    hasRelation<T extends typeof Model, R extends typeof Relation, O extends RelationOptions<T>>
+    updateData(values: Partial<MD>): this {
+        this.data.setMany(values);
+
+        return this;
+    }
+
+    assign(values: Partial<this>): this {
+        Object.assign(this, values);
+
+        return this;
+    }
+
+    tap(callback: (model: this) => any): this {
+        return tap(this, callback);
+    }
+
+    protected createRelation<T extends typeof Model, R extends typeof Relation, O extends RelationOptions<T>>
     (relation: R, type: T, options: LocalRelationOptions<T, O, this, MD>): InstanceType<R> {
         return new relation({
             type,

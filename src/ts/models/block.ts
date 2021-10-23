@@ -2,6 +2,7 @@ import Model, {IModelData, DataController, Historian, InstanceDataType, Data, Mo
 import {IImageBlockData} from '@/models/blocks/image';
 import {IContainerBlockData} from '@/models/blocks/container';
 import {ComponentMap} from '@/types/vue/component';
+import Builder from '@/models/builder';
 
 type BlockOptionsType<M extends Block> = Required<InstanceDataType<M>['options']>;
 type BlockOptionType<M extends Block, K extends keyof BlockOptionsType<M>> = BlockOptionsType<M>[K];
@@ -100,7 +101,7 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         return this.componentMap;
     }
 
-    public makeBlock<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}): InstanceType<M> {
+    public new<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}): InstanceType<M> {
         const block = this.makeModel(model, data);
 
         block.setManyOptions(options);

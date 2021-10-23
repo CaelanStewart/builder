@@ -7,6 +7,7 @@ interface AnyObject {
 
 export type ActionTypeMap = {
     set: ActionSet;
+    create: ActionCreate;
     delete: ActionDelete;
     splice: ActionSplice;
     transaction: ActionTransaction;
@@ -30,6 +31,13 @@ export interface ActionSet extends Action {
     object: AnyObject;
     prop: string;
     oldValue: any;
+    newValue: any;
+}
+
+export interface ActionCreate extends Action {
+    type: 'create';
+    object: AnyObject;
+    prop: string;
     newValue: any;
 }
 
@@ -90,6 +98,9 @@ export default class Historian {
             set(action) {
                 action.object[action.prop] = action.oldValue;
             },
+            create(action) {
+                delete action.object[action.prop];
+            },
             splice(action) {
                 action.array.splice(action.index, action.items.length, ...action.deleted);
             },
@@ -104,6 +115,9 @@ export default class Historian {
         },
         [REDO]: {
             set(action) {
+                action.object[action.prop] = action.newValue;
+            },
+            create(action) {
                 action.object[action.prop] = action.newValue;
             },
             splice(action) {
