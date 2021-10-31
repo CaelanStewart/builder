@@ -138,17 +138,45 @@ export default class Historian {
         this.almanac = new Almanac(size);
     }
 
-    public record<TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>(type: TypeName, entry: Omit<ActionType, 'type'>): void {
-        const action = {
-            type,
-            ...entry
-        };
-
+    public push(action: Action): void {
         if (this.transactionIndex === -1) {
             this.almanac.commit(action);
         } else {
             this.transactions[this.transactionIndex].push(action);
         }
+    }
+
+    public createAction<TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>(type: TypeName, entry: Omit<ActionType, 'type'>): ActionType {
+        (entry as Omit<ActionType, 'type'> & Partial<Pick<ActionType, 'type'>>).type = type;
+
+        return entry as ActionType;
+    }
+
+    /**
+     * Record an action.
+     *
+     * This does not perform the action, it only records the action.
+     *
+     * @param type
+     * @param entry
+     * @see {Historian.prototype.do} – The do() method will perform the action as well as record it.
+     */
+    public record<TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>(type: TypeName, entry: Omit<ActionType, 'type'>): void {
+        this.push(this.createAction(type, entry));
+    }
+
+    /**
+     * Simultaneously perform and record an action.
+     *
+     * @param type
+     * @param entry
+     */
+    public do<TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>(type: TypeName, entry: Omit<ActionType, 'type'>): void {
+        const action = this.createAction(type, entry);
+
+        this.applyAction(REDO, action);
+
+        this.push(action);
     }
 
     public transaction(executor: () => any) {
@@ -158,7 +186,7 @@ export default class Historian {
         ++this.transactionIndex;
 
         try {
-            executor();
+            const ret = executor();
 
             --this.transactionIndex;
 
@@ -169,6 +197,8 @@ export default class Historian {
                     stack: arrayRemoveAll(this.transactions)
                 })
             }
+
+            return ret;
         } catch (error) {
             // Undo this current level of transaction here, allowing the rethrown
             // error to be caught, and a higher-order transaction to continue.

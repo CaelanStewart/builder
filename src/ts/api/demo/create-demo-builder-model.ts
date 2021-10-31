@@ -24,6 +24,9 @@ export function createDemoBuilderModel(): Builder {
         builder.new(RowBlock, {}).tap(row => {
             row.columns = [
                 builder.new(ColumnBlock, {
+                    
+                }),
+                builder.new(ColumnBlock, {
 
                 })
             ]

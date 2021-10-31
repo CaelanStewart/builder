@@ -6,6 +6,7 @@
     "serve": "webpack-dev-server",
     "build": "webpack --env.production",
     "dev": "webpack",
+    "watch": "webpack --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "C Stewart",

@@ -11,7 +11,7 @@ export interface IImageBlockData extends IBlockData {
     options?: IImageBlockOptions;
 }
 
-export default class ImageBlock<MD extends Data<IImageBlockData> = IImageBlockData> extends Block<MD> {
+export default class ImageBlock<MD extends Data<IImageBlockData> = Data<IImageBlockData>> extends Block<MD> {
     static readonly type = 'image';
 
     public image: Image|null = null;

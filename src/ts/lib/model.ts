@@ -44,7 +44,7 @@ export default class Model<MD extends IModelData = IModelData> {
         this.historian = history;
         this.data = new DataController<MD>(data, history);
 
-        this.$ = this.data.createProxy();
+        this.$ = this.data.getData();
 
         this.updateTypeString();
     }
