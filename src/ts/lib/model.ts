@@ -38,7 +38,7 @@ export default class Model<MD extends IModelData = IModelData> {
     public readonly relations: RelationsObject = {};
     private historian: Historian;
 
-    public readonly $: IModelData;
+    public readonly $: MD;
 
     constructor(data: MD, history: Historian) {
         this.historian = history;
@@ -51,28 +51,14 @@ export default class Model<MD extends IModelData = IModelData> {
 
     protected updateTypeString(): void {
         // Ensure type string is always present
-        this.data.set('_type', this.constructor.name);
+        this.$._type = this.constructor.name;
     }
 
     /**
-     * Returns a deep clone of the Model's data object by default.
-     *
-     * @see DataController.prototype.getMutableReferenceToData() - to get a mutable reference to the original data
-     * object. This is not recommended unless you plan only to read the contents en mass, as any changes to the object
-     * will not be detected by the DataController and hence will not add a history state, and may even break the
-     * history state.
+     * Get the Model data.
      */
     getData() {
         return this.data.getData();
-    }
-
-    /**
-     * Get a property of the Model's data object.
-     *
-     * @param prop
-     */
-    getProp<P extends keyof MD>(prop: P): MD[P] {
-        return this.data.get(prop);
     }
 
     updateData(values: Partial<MD>): this {

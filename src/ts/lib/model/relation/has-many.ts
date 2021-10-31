@@ -25,7 +25,7 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
     }
 
     protected buildDataFromValue(): Data<T> {
-        return this.value.map(model => model.data.getMutableReferenceToData()) as Data<T>;
+        return this.value.map(model => model.data.getUntrackedData()) as Data<T>;
     }
 
     protected isValidData(data: unknown): data is Data<T> {
@@ -61,7 +61,7 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
 
         const data = this.getDataFromParent() as Data<T>;
 
-        data.push(item.data.getMutableReferenceToData() as ModelDataType<T>);
+        data.push(item.data.getUntrackedData() as ModelDataType<T>);
     }
 
     remove(item: InstanceType<T>) {

@@ -6,6 +6,6 @@ export interface IImageData extends IModelData {
 
 export default class Image<MD extends Data<IImageData> = IImageData> extends Model<MD> {
     public getSrc() {
-        return this.data.get('src');
+        return this.$.src;
     }
 }

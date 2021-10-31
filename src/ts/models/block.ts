@@ -66,7 +66,7 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
     }
 
     public getOptions(): MD['options'] {
-        return this.data.get('options');
+        return this.$.options;
     }
 
     public getOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K): O[K] | undefined {

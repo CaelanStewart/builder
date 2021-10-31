@@ -27,7 +27,7 @@ export default class HasOne<T extends typeof Model> extends Relation<T> {
 
     protected buildDataFromValue(): ModelDataType<T>|null {
         if (this.value) {
-            return this.value.data.getMutableReferenceToData() as ModelDataType<T>;
+            return this.value.data.getUntrackedData() as ModelDataType<T>;
         }
 
         return null;

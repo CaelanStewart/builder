@@ -1,7 +1,7 @@
 import Model, {
     ModelPropType,
     RelationsObject,
-    ModelDataType
+    ModelDataType, IModelData
 } from '@/lib/model';
 import {isSubtype} from '@/lib/functions/type';
 import Morph, {TypeMap} from '@/lib/model/relation/morph';
@@ -110,13 +110,13 @@ export default class Relation<T extends typeof Model> {
 
     protected updateParentData(): void {
         if (this.prop) {
-            this.parent.data.set(this.prop as any, this.buildData());
+            (this.parent.$ as any)[this.prop] = this.buildData();
         }
     }
 
     protected getDataFromParent(): unknown {
         if (this.prop) {
-            return this.parent.data.get(this.prop as any);
+            return (this.parent.data.getUntrackedData() as any)[this.prop];
         }
 
         return undefined;

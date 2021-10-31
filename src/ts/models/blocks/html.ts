@@ -11,6 +11,6 @@ export interface IHtmlBlockData extends IBlockData {
 
 export default class HtmlBlock<MD extends Data<IHtmlBlockData> = IHtmlBlockData> extends Block<MD> {
     getHtml() {
-        return this.data.get('html');
+        return this.$.html;
     }
 }
