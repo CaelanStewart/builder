@@ -61,6 +61,11 @@ export default class Model<MD extends IModelData = IModelData> {
         return this.data.getData();
     }
 
+    /**
+     * Use this to do bulk assignment to data.
+     *
+     * @param values
+     */
     updateData(values: Partial<MD>): this {
         this.data.setMany(values);
 

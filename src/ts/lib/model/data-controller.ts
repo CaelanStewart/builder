@@ -56,10 +56,6 @@ export default class DataController<T extends IModelData = IModelData> {
     }
 
     delete(prop: keyof T): void {
-        this.historian.do('delete', {
-            object: this.data,
-            prop: prop as string,
-            oldValue: this.data[prop]
-        });
+        delete this.proxy[prop];
     }
 }

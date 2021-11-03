@@ -48,10 +48,12 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         })
     }
 
+    private readonly options: MD['options'];
+
     constructor(data: MD, history: Historian) {
         super(data, history);
 
-        data.options = {
+        this.options = {
             ...this.getDefaultOptions(),
             ...data.options
         }
@@ -66,19 +68,15 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
     }
 
     public getOptions(): MD['options'] {
-        return this.$.options;
+        return this.options;
     }
 
-    public getOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K): O[K] | undefined {
-        const options = this.getOptions() as O;
-
-        if (options) {
-            return options[name];
-        }
+    public getOption<K extends keyof Required<MD>['options']>(name: K, defaultValue?: MD['options'][K]): MD['options'][K] | undefined {
+        return (this.options as MD['options'])[name] ?? defaultValue;
     }
 
     public setOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K, value: O[K]): void {
-        (this.getOptions() as O)[name] = value;
+        (this.options as O)[name] = value;
     }
 
     public setManyOptions(options: Partial<MD['options']>): void {

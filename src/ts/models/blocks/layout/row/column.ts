@@ -1,5 +1,9 @@
 import Block, {IBlockData, IBlockOptions, Historian, Data, IBlockCapabilities} from '@/models/block';
 
+export interface IColumnBlockCapabilities extends IBlockCapabilities {
+
+}
+
 export interface IColumnBlockOptions extends IBlockOptions {
     //
 }
