@@ -215,7 +215,6 @@ export default class Historian {
         const action = this.almanac.back();
 
         if (action) {
-            console.log(action);
             this.applyAction(UNDO, action);
 
             return true;
@@ -237,7 +236,6 @@ export default class Historian {
     }
 
     private applyAction(direction: Direction, action: Action) {
-        console.log('applyAction', direction, action);
         (this.transformers[direction][action.type] as ActionTransformer<Action>)
             .call(this, action);
     }

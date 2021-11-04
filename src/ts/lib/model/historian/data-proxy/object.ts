@@ -24,9 +24,6 @@ export function createObjectProxy<O extends { }>(historian: Historian, object: O
         set: (target: O, prop: string | symbol, value: any): boolean => {
             if (typeof prop === 'string') {
                 if (target.hasOwnProperty(prop)) {
-                    (window as any)._o1 = object;
-                    console.log('set', prop, value);
-
                     historian.do('set', {
                         prop,
                         object,

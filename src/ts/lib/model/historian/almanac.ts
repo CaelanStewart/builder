@@ -12,7 +12,7 @@ export default class Almanac {
     }
 
     public isPast(): boolean {
-        return this.pointer === this.size - 1;
+        return this.pointer < this.size - 1;
     }
 
     private static makeEntries(size: number): ActionList {
@@ -59,11 +59,9 @@ export default class Almanac {
 
     public forward(): Action | undefined {
         if (this.pointer < this.size - 1) {
-            const current = this.getCurrent();
-
             ++this.pointer;
 
-            return current;
+            return this.getCurrent();
         }
     }
 

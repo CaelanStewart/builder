@@ -2,6 +2,7 @@ import {IModelData} from '@/lib/model';
 import {cloneDeep} from 'lodash';
 import Historian from '@/lib/model/historian';
 import createProxy from '@/lib/model/historian/data-proxy';
+import {ref} from 'vue';
 
 export default class DataController<T extends IModelData = IModelData> {
     private readonly data: T;
@@ -9,7 +10,11 @@ export default class DataController<T extends IModelData = IModelData> {
     private readonly historian: Historian;
 
     constructor(data: T, historian: Historian) {
-        this.data = data;
+        // We must make the data reactive otherwise Vue will not respond to
+        // changes made to properties on the raw un-proxied data object.
+        const reactive = ref<T>(data);
+
+        this.data = reactive.value;
         this.historian = historian;
 
         this.proxy = this.createProxy();
