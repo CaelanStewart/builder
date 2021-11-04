@@ -13,7 +13,9 @@ export interface IModelData {
 
 // This must be used in for the types of Model data object in derived Models so
 // that the construct signatures are all compatible between the derived types.
-export type Data<D extends IModelData> = Partial<Omit<D, keyof IModelData>> & IModelData;
+export type Arg<D> = Partial<Omit<D, keyof IModelData>> & IModelData;
+
+export type DataObject = {[prop: string]: any};
 
 export type ModelPropType<M extends typeof Model, P extends keyof InstanceType<M>> = InstanceType<M>[P];
 export type ModelDataType<M extends typeof Model> = ReturnType<ModelPropType<M, 'getData'>>;
@@ -40,9 +42,9 @@ export default class Model<MD extends IModelData = IModelData> {
 
     public readonly $: MD;
 
-    constructor(data: MD, history: Historian) {
+    constructor(data: DataObject, history: Historian) {
         this.historian = history;
-        this.data = new DataController<MD>(data, history);
+        this.data = new DataController<MD>(data as MD, history);
 
         this.$ = this.data.getData();
 

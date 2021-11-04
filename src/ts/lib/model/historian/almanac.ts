@@ -49,17 +49,21 @@ export default class Almanac {
 
     public back(): Action | undefined {
         if (this.pointer > 0) {
+            const current = this.getCurrent();
+
             --this.pointer;
 
-            return this.getCurrent();
+            return current;
         }
     }
 
     public forward(): Action | undefined {
         if (this.pointer < this.size - 1) {
+            const current = this.getCurrent();
+
             ++this.pointer;
 
-            return this.getCurrent();
+            return current;
         }
     }
 

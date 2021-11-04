@@ -1,3 +1,5 @@
+import {shallowReactive} from 'vue';
+
 export * from '@/composable/block/events';
 
 import Block from '@/models/block';

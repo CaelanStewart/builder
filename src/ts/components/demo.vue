@@ -20,6 +20,7 @@
             const builder = ref(createDemoBuilderModel());
 
             console.log(builder.value);
+            (window as any).builder = builder.value;
 
             return {
                 builder: builder

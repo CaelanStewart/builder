@@ -1,5 +1,6 @@
 import ContainerBlock, {IContainerBlockData} from '@/models/blocks/container';
-import Block, {IBlockData, IBlockOptions, Data, Historian} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Arg, Historian} from '@/models/block';
+import {ComponentMap} from '@/types/vue/component';
 
 export interface EditMode {
     // permissions?: {
@@ -17,8 +18,10 @@ export interface IBuilderData extends IBlockData {
     options?: IBuilderOptions;
 }
 
-export default class Builder<MD extends Data<IBuilderData> = IBuilderData> extends Block<MD> {
+export default class Builder<MD extends Arg<IBuilderData> = IBuilderData, O extends Arg<IBuilderOptions> = Arg<IBuilderOptions>> extends Block<MD, O> {
     public container: ContainerBlock|null = null;
+
+    static readonly type: string = 'builder';
 
     relations = {
         ...super.relations,
@@ -28,7 +31,11 @@ export default class Builder<MD extends Data<IBuilderData> = IBuilderData> exten
         })
     }
 
-    static makeBuilder<D extends IBuilderData>(data: D, history: Historian = new Historian): Builder<D> {
-        return new Builder<D>(data, history);
+    static makeBuilder<D extends IBuilderData>(options: {data: D, history?: Historian, components?: ComponentMap}): Builder<D> {
+        return new Builder<D>(options.data, options.history ?? new Historian).tap(builder => {
+            if (options.components) {
+                builder.defineComponents(options.components);
+            }
+        });
     }
 }

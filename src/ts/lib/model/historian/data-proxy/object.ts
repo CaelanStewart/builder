@@ -15,9 +15,6 @@ export function createObjectProxy<O extends { }>(historian: Historian, object: O
                 }
 
                 if (! children.hasOwnProperty(prop)) {
-                    if (Array.isArray(value)) {
-
-                    }
                     children[prop as keyof O] = createProxy(historian, target[prop as keyof O]);
                 }
 
@@ -27,16 +24,19 @@ export function createObjectProxy<O extends { }>(historian: Historian, object: O
         set: (target: O, prop: string | symbol, value: any): boolean => {
             if (typeof prop === 'string') {
                 if (target.hasOwnProperty(prop)) {
+                    (window as any)._o1 = object;
+                    console.log('set', prop, value);
+
                     historian.do('set', {
                         prop,
-                        object: target,
+                        object,
                         oldValue: target[prop as keyof O],
                         newValue: value
                     });
                 } else {
                     historian.do('create', {
                         prop,
-                        object: target,
+                        object,
                         newValue: value
                     });
                 }
@@ -64,7 +64,7 @@ export function createObjectProxy<O extends { }>(historian: Historian, object: O
                 if (target.hasOwnProperty(prop)) {
                     historian.do('delete', {
                         prop,
-                        object: target,
+                        object,
                         oldValue: target[prop as keyof O]
                     });
                 }

@@ -10,6 +10,9 @@ import Builder from '@/components/builder.vue';
 import ContainerBlock from '@/components/blocks/container.vue';
 import ImageBlock from '@/components/blocks/image.vue';
 import {ComponentMap} from '@/types/vue/component';
+import RowBlock from '@/components/blocks/layout/row.vue';
+import ColumnBlock from '@/components/blocks/layout/row/column.vue';
+import TextBlock from '@/components/blocks/content/text.vue';
 
 export {
     Models,
@@ -20,11 +23,12 @@ Morph.setDefaultTypeMap({
     ...Models
 });
 
-Block.setComponentMap(getDefaultBlockComponentMap());
-
 export function getDefaultBlockComponentMap(): ComponentMap {
     return {
         'block-container': ContainerBlock,
-        'block-image': ImageBlock
+        'block-image': ImageBlock,
+        'block-row': RowBlock,
+        'block-column': ColumnBlock,
+        'block-text': TextBlock
     }
 }

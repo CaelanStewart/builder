@@ -1,8 +1,8 @@
-import Model, {IModelData, DataController, Historian, InstanceDataType, Data, ModelDataType} from '@/lib/model';
+import Model, {IModelData, DataController, Historian, InstanceDataType, Arg, ModelDataType} from '@/lib/model';
 import {IImageBlockData} from '@/models/blocks/image';
 import {IContainerBlockData} from '@/models/blocks/container';
 import {ComponentMap} from '@/types/vue/component';
-import Builder from '@/models/builder';
+import {Box, box} from '@/lib/functions/util';
 
 type BlockOptionsType<M extends Block> = Required<InstanceDataType<M>['options']>;
 type BlockOptionType<M extends Block, K extends keyof BlockOptionsType<M>> = BlockOptionsType<M>[K];
@@ -13,6 +13,7 @@ export interface IHasChildren<T extends Block = Block> {
 
 export interface IBlockOptions {
     disabled?: boolean;
+    inheritComponents?: boolean;
 }
 
 export interface IBlockData extends IModelData {
@@ -27,10 +28,12 @@ export interface IBlockCapabilities {
 
 export type TAnyBlockData = IContainerBlockData | IImageBlockData;
 
-export {DataController, Historian, Data};
+export {DataController, Historian, Arg};
 
-export default class Block<MD extends Data<IBlockData> = IBlockData> extends Model<MD> {
-    protected static componentMap: ComponentMap = {};
+export default class Block<MD extends Arg<IBlockData> = Arg<IBlockData>, O extends Arg<IBlockOptions> = Arg<IBlockOptions>> extends Model<MD> {
+    protected static componentMap: Box<ComponentMap> = box({});
+
+    protected componentMap: Box<ComponentMap>;
 
     static readonly type: string = 'block';
 
@@ -48,15 +51,17 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         })
     }
 
-    private readonly options: MD['options'];
+    private readonly options: O;
 
-    constructor(data: MD, history: Historian) {
-        super(data, history);
+    constructor(data: {[prop: string]: any}, history: Historian) {
+        super(data as MD, history);
 
         this.options = {
             ...this.getDefaultOptions(),
             ...data.options
         }
+
+        this.componentMap = box(this.resolveComponentMap());
     }
 
     public can<K extends keyof this['capabilities']>(capability: K): this['capabilities'][K] {
@@ -71,18 +76,18 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         return this.options;
     }
 
-    public getOption<K extends keyof Required<MD>['options']>(name: K, defaultValue?: MD['options'][K]): MD['options'][K] | undefined {
-        return (this.options as MD['options'])[name] ?? defaultValue;
+    public getOption<K extends keyof O>(name: K, defaultValue?: O[K]): O[K] | undefined {
+        return (this.options as O)[name] ?? defaultValue;
     }
 
-    public setOption<O extends MD['options'] & IBlockOptions, K extends keyof O>(name: K, value: O[K]): void {
+    public setOption<K extends keyof O>(name: K, value: O[K]): void {
         (this.options as O)[name] = value;
     }
 
-    public setManyOptions(options: Partial<MD['options']>): void {
+    public setManyOptions(options: Partial<O>): void {
         for (const key in options) {
             if (options.hasOwnProperty(key)) {
-                this.setOption(key, options[key]);
+                this.setOption(key, options[key] as O[keyof O]);
             }
         }
     }
@@ -91,19 +96,46 @@ export default class Block<MD extends Data<IBlockData> = IBlockData> extends Mod
         return (this.constructor as typeof Block).type;
     }
 
-    public static setComponentMap(map: ComponentMap): void {
-        this.componentMap = map;
+    /**
+     * Get the initial component map from the static component map.
+     *
+     * @protected
+     */
+    protected resolveComponentMap(): ComponentMap {
+        return (this.constructor as typeof Block).getComponentMap();
+    }
+
+    public getComponentMap(): ComponentMap {
+        return this.componentMap.get();
+    }
+
+    public setComponentMap(map: ComponentMap): void {
+        this.componentMap.set(map);
+    }
+
+    public defineComponents(map: ComponentMap): void {
+        Object.assign(this.componentMap.get(), map);
     }
 
     public static getComponentMap(): ComponentMap {
-        return this.componentMap;
+        return this.componentMap.get();
+    }
+
+    public static setComponentMap(map: ComponentMap): void {
+        this.componentMap.set(map);
+    }
+
+    public static defineComponents(map: ComponentMap): void {
+        Object.assign(this.componentMap.get(), map);
     }
 
     public new<M extends typeof Block, D extends ModelDataType<M>>(model: M, data: D, options: Partial<D['options']> = {}): InstanceType<M> {
-        const block = this.makeModel(model, data);
+        return this.makeModel(model, data).tap(block => {
+            block.setManyOptions(options);
 
-        block.setManyOptions(options);
-
-        return block;
+            if (this.getOption('inheritComponents')) {
+                block.defineComponents(this.getComponentMap());
+            }
+        })
     }
 }

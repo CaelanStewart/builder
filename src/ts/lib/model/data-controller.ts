@@ -11,7 +11,8 @@ export default class DataController<T extends IModelData = IModelData> {
     constructor(data: T, historian: Historian) {
         this.data = data;
         this.historian = historian;
-        this.proxy = createProxy(historian, data);
+
+        this.proxy = this.createProxy();
     }
 
     createProxy() {

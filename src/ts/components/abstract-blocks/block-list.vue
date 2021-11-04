@@ -1,11 +1,11 @@
 <template>
     <div class="block-list">
-        <component v-for="child of children" :is="`block-${child.getType()}`" :block="child" />
+        <component v-for="child of childrenToRender" :is="`block-${child.getType()}`" :block="child" />
     </div>
 </template>
 
 <script lang="ts">
-    import {defineComponent, ref, PropType} from 'vue';
+    import {defineComponent, ref, PropType, computed} from 'vue';
     import {getComponentMap} from '@/composable/block';
     import Block from '@/models/block';
     import {ComponentMap} from '@/types/vue/component';
@@ -28,7 +28,13 @@
         beforeCreate() {
             this.$options.components = {
                 ...this.$options.components,
-                ...getComponentMap()
+                ...getComponentMap(this.$props.componentMap)
+            }
+        },
+
+        computed: {
+            childrenToRender(): Block[] {
+                return this.children.filter(child => child || console.warn('Falsy child passed to BlockList', this));
             }
         }
     })

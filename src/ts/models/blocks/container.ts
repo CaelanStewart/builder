@@ -2,7 +2,7 @@ import Block, {
     TAnyBlockData,
     IBlockOptions,
     IHasChildren,
-    Data
+    Arg
 } from '@/models/block';
 import BlockList, {IBlockListCapabilities, IBlockListData} from '@/models/block/block-list';
 
@@ -19,7 +19,7 @@ export interface IContainerBlockData extends IBlockListData {
     options?: IContainerBlockOptions;
 }
 
-export default class ContainerBlock<MD extends Data<IContainerBlockData> = IContainerBlockData> extends BlockList<MD> implements IHasChildren {
+export default class ContainerBlock<MD extends Arg<IContainerBlockData> = IContainerBlockData, O extends Arg<IContainerBlockOptions> = Arg<IContainerBlockOptions>> extends BlockList<MD, O> implements IHasChildren {
     static readonly type = 'container';
 
     public children: Block[] = [];
