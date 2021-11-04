@@ -1,12 +1,13 @@
-import Block, {IBlockData, IBlockOptions, Historian, Arg} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Arg} from '@/models/block';
 
 export interface ITextBlockOptions extends IBlockOptions {
     tag?: string;
 }
 
 export interface ITextBlockData extends IBlockData {
-    options?: ITextBlockOptions;
-    text?: string;
+    options: ITextBlockOptions;
+    text: string;
+    test: string[];
 }
 
 export default class TextBlock<MD extends Arg<ITextBlockData> = Arg<ITextBlockData>, O extends Arg<ITextBlockOptions> = Arg<ITextBlockOptions>> extends Block<MD, O> {

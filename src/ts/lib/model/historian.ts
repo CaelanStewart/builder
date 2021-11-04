@@ -1,5 +1,6 @@
 import {arrayRemoveAll} from '@/lib/functions/array';
 import Almanac from '@/lib/model/historian/almanac';
+import createProxy, {Value as ProxyValue} from '@/lib/model/historian/data-proxy';
 
 interface AnyObject {
     [key: string]: any;
@@ -102,6 +103,7 @@ export default class Historian {
                 delete action.object[action.prop];
             },
             splice(action) {
+                console.log('UNDO splice', [action.array.splice, action, action.items, action.items.length]);
                 action.array.splice(action.index, action.items.length, ...action.deleted);
             },
             delete(action) {

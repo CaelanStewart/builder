@@ -1,5 +1,5 @@
 import Historian from '@/lib/model/historian';
-import createProxy, {shouldProxyValue} from '@/lib/model/historian/data-proxy';
+import createProxy, {PROXY, shouldProxyValue} from '@/lib/model/historian/data-proxy';
 
 export function createArrayProxy<A extends any[]>(historian: Historian, array: A): A {
     let noProxyGet = false;
@@ -7,16 +7,18 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
     const children = new Map<A[number], A[number]>();
     const traps = {
         push: (...items: any[]): number => {
+            const index = array.length;
+
             // Ignore all sets resulting from the push, as we'll
             // capture that in a single historian event so we
             // can avoid unnecessary repeated set actions.
             ignoreSet = true;
-            const length = array.push(items);
+            const length = array.push(...items);
             ignoreSet = false;
 
             historian.record('splice', {
                 array,
-                index: array.length - items.length - 1,
+                index,
                 deleted: [],
                 items
             });
@@ -103,6 +105,10 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
 
     return new Proxy(array, {
         get: (target: A, prop: string | symbol): any => {
+            if (prop === PROXY) {
+                return true;
+            }
+
             if (typeof prop === 'string') {
                 const value = target[prop as keyof A];
 
@@ -125,6 +131,10 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
             }
         },
         set: (target: A, prop: string | symbol, value: any): boolean => {
+            if (prop === PROXY) {
+                return false;
+            }
+
             if (ignoreSet || prop === 'length' || typeof prop === 'symbol') {
                 return Reflect.set(target, prop, value);
             }

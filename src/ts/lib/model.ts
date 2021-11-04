@@ -38,12 +38,10 @@ export {DataController, Historian, Relation};
 export default class Model<MD extends IModelData = IModelData> {
     public readonly data: DataController<MD>;
     public readonly relations: RelationsObject = {};
-    private historian: Historian;
 
     public readonly $: MD;
 
     constructor(data: DataObject, history: Historian) {
-        this.historian = history;
         this.data = new DataController<MD>(data as MD, history);
 
         this.$ = this.data.getData();
@@ -54,6 +52,10 @@ export default class Model<MD extends IModelData = IModelData> {
     protected updateTypeString(): void {
         // Ensure type string is always present
         this.$._type = this.constructor.name;
+    }
+
+    getHistorian() {
+        return this.data.getHistorian();
     }
 
     /**
@@ -137,6 +139,6 @@ export default class Model<MD extends IModelData = IModelData> {
     }
 
     makeModel<M extends typeof Model>(model: M, data: ModelDataType<M>): InstanceType<M> {
-        return new model(data, this.data.getHistorian()) as InstanceType<M>;
+        return new model(data, this.getHistorian()) as InstanceType<M>;
     }
 }

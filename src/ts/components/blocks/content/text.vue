@@ -1,6 +1,10 @@
 <template>
     <abstract-block :block="block">
         <component :is="block.getOption('tag', 'p')">{{ block.$.text }}</component>
+
+        <ul v-if="block.$.test">
+            <li v-for="item in block.$.test">{{ item }}</li>
+        </ul>
     </abstract-block>
 </template>
 
@@ -26,9 +30,7 @@
         setup(props) {
 
 
-            return {
-
-            }
+            return {}
         }
     });
 </script>

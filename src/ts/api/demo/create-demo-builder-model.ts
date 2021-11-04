@@ -26,7 +26,8 @@ export function createDemoBuilderModel(): Builder {
             row.columns = [
                 builder.new(ColumnBlock, {}).tap(col => {
                     col.child = builder.new(TextBlock, {
-                        text: 'Test text'
+                        text: 'Test text',
+                        test: ['Test 1', 'Test 2']
                     })
                 }),
                 builder.new(ColumnBlock, {
