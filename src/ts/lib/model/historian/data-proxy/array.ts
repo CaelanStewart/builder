@@ -98,12 +98,16 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
             // that when an undo occurs, the opposite series of
             // sets is applied, leaving the original array.
             return historian.transaction(() => {
-                return array.sort(comparator);
+                // Use .call with 'this' as the proxy so
+                // we don't cause infinite recursion.
+                return array.sort.call(proxy, comparator);
             });
         }
     };
 
-    return new Proxy(array, {
+    // Store reference here as it needs to be used by
+    // the sort trap to catch subsequent sets.
+    const proxy = new Proxy(array, {
         get: (target: A, prop: string | symbol): any => {
             if (prop === PROXY) {
                 return true;
@@ -156,5 +160,7 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
 
             return true;
         }
-    })
+    });
+
+    return proxy;
 }

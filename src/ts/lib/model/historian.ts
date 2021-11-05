@@ -103,7 +103,6 @@ export default class Historian {
                 delete action.object[action.prop];
             },
             splice(action) {
-                console.log('UNDO splice', [action.array.splice, action, action.items, action.items.length]);
                 action.array.splice(action.index, action.items.length, ...action.deleted);
             },
             delete(action) {
@@ -194,7 +193,7 @@ export default class Historian {
 
             // If we're at the top (given the above increment) then we need to
             // commit this transaction which has executed without exceptions.
-            if (this.transactionIndex === 0) {
+            if (this.transactionIndex === -1) {
                 this.record('transaction', {
                     stack: arrayRemoveAll(this.transactions)
                 })
