@@ -47,6 +47,9 @@ export default class Almanac {
         this.entries.shift();
     }
 
+    /**
+     * Go back a state, returns the action at this point if there is one.
+     */
     public back(): Action | undefined {
         if (this.pointer > 0) {
             const current = this.getCurrent();
@@ -57,6 +60,9 @@ export default class Almanac {
         }
     }
 
+    /**
+     * Go forward a state, returns the action at this point if there is one.
+     */
     public forward(): Action | undefined {
         if (this.pointer < this.size - 1) {
             ++this.pointer;

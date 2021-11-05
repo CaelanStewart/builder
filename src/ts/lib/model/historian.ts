@@ -1,6 +1,8 @@
 import {arrayRemoveAll} from '@/lib/functions/array';
 import Almanac from '@/lib/model/historian/almanac';
 import createProxy, {Value as ProxyValue} from '@/lib/model/historian/data-proxy';
+import {classError} from '@/lib/functions/error';
+import createPublicPromise, {IPublicPromise} from '@/lib/async/public-promise';
 
 interface AnyObject {
     [key: string]: any;
@@ -57,6 +59,8 @@ export interface ActionTransaction extends Action {
 
 export type ActionList = (Action | undefined)[];
 
+type Executor<T> = () => Promise<T>;
+
 type Transaction = Action[];
 type TransactionStack = Transaction[];
 
@@ -93,6 +97,8 @@ export default class Historian {
     private readonly transactions: TransactionStack = [];
 
     private transactionIndex: number = -1;
+
+    private epochId: number|null = null;
 
     private readonly transformers: DirectionTransformerMap = {
         [UNDO]: {
@@ -135,11 +141,47 @@ export default class Historian {
         }
     }
 
-    constructor(size: number = 50) {
+    constructor(size: number = 50, private epochTime?: number) {
         this.almanac = new Almanac(size);
+
+        // if (this.batchInterval) {
+        //     this.startBatchInterval(this.batchInterval);
+        // }
+    }
+
+    // startBatchInterval(interval: number): void {
+    //     if (this.batchTimerId) {
+    //         throw classError(this, 'A batch interval has already been started');
+    //     }
+    //
+    //     this.batchTimerId = setInterval(() => {
+    //
+    //     }, this.batchInterval ?? interval);
+    // }
+
+    private newEpoch() {
+        this.newTransaction();
+
+        this.epochId = setTimeout(() => {
+            this.endTransaction();
+
+            this.epochId = null;
+        }, this.epochTime);
+    }
+
+    private endEpoch() {
+        if (this.epochId) {
+            clearTimeout(this.epochId);
+
+            this.endTransaction();
+        }
     }
 
     public push(action: Action): void {
+        if (this.epochTime && this.transactionIndex === -1) {
+            this.newEpoch();
+        }
+
         if (this.transactionIndex === -1) {
             this.almanac.commit(action);
         } else {
@@ -180,32 +222,71 @@ export default class Historian {
         this.push(action);
     }
 
-    public transaction(executor: () => any) {
+    public handleTransactionError(transaction: Transaction, error: unknown) {
+        // Undo this current level of transaction here, allowing the rethrown
+        // error to be caught, and a higher-order transaction to continue.
+        this.applyTransaction(UNDO, transaction);
+
+        --this.transactionIndex;
+    }
+
+    private newTransaction() {
         const transaction: Transaction = [];
 
         this.transactions.push(transaction);
         ++this.transactionIndex;
 
+        return transaction;
+    }
+
+    /**
+     * Slightly hacky approach to get sync and async types using the same function with async/await.
+     *
+     * @param executor
+     * @private
+     */
+    public async asyncTransaction<T>(executor: Executor<T>): Promise<T> {
+        const transaction = this.newTransaction();
+
         try {
-            const ret = executor();
+            const ret = await executor();
 
-            --this.transactionIndex;
-
-            // If we're at the top (given the above increment) then we need to
-            // commit this transaction which has executed without exceptions.
-            if (this.transactionIndex === -1) {
-                this.record('transaction', {
-                    stack: arrayRemoveAll(this.transactions)
-                })
-            }
+            this.endTransaction();
 
             return ret;
         } catch (error) {
-            // Undo this current level of transaction here, allowing the rethrown
-            // error to be caught, and a higher-order transaction to continue.
-            this.applyTransaction(UNDO, transaction);
+            this.handleTransactionError(transaction, error);
 
-            --this.transactionIndex;
+            // Allow error to be dealt with or to propagate up to any parent transactions
+            throw error;
+        }
+    }
+
+    private endTransaction() {
+        --this.transactionIndex;
+
+        // If we're at the top (given the above increment) then we need to
+        // commit this transaction which has executed without exceptions.
+        if (this.transactionIndex === -1) {
+            // Commit directly to the almanac so we don't start a new
+            // epoch, getting stuck in a loop and never committing.
+            this.almanac.commit(this.createAction('transaction', {
+                stack: arrayRemoveAll(this.transactions)
+            }));
+        }
+    }
+
+    public transaction<T>(executor: () => T): T {
+        const transaction = this.newTransaction();
+
+        try {
+            const ret = executor();
+
+            this.endTransaction();
+
+            return ret;
+        } catch (error) {
+            this.handleTransactionError(transaction, error);
 
             // Allow error to be dealt with or to propagate up to any parent transactions
             throw error;
@@ -213,6 +294,8 @@ export default class Historian {
     }
 
     public undo(): boolean {
+        this.endEpoch();
+
         const action = this.almanac.back();
 
         if (action) {
@@ -225,6 +308,8 @@ export default class Historian {
     }
 
     public redo(): boolean {
+        this.endEpoch();
+
         const action = this.almanac.forward();
 
         if (action) {

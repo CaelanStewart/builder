@@ -8,7 +8,12 @@ import TextBlock from '@/models/blocks/content/text';
 import {getDefaultBlockComponentMap} from '@/builder';
 
 export function createDemoBuilderModel(): Builder {
-    const historian = new Historian;
+    const size = 50;
+    const epochTime = 20000;
+    const historian = new Historian(size, epochTime);
+
+    console.log(`Created Historian (size: ${size}, epochTime: ${epochTime})`);
+
     const builder = Builder.makeBuilder({
         data: {
             //
