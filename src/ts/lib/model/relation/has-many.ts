@@ -1,6 +1,7 @@
 import Relation, {RelationOptions} from '@/lib/model/relation';
 import Model, {ModelDataType} from '@/lib/model';
 import {arrayRemove} from '@/lib/functions/array';
+import {createArrayProxy} from '@/lib/model/historian/data-proxy/array';
 
 export interface HasManyRelationOptions<T extends typeof Model> extends RelationOptions<T> {
     defaultData?(): Data<T>;
@@ -15,7 +16,7 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
     constructor(options: HasManyRelationOptions<T>) {
         super(options);
 
-        this.value = this.buildValueFromData();
+        this.value = createArrayProxy(this.historian, this.buildValueFromData());
     }
 
     protected buildValueFromData(): Value<T> {
@@ -41,9 +42,13 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
     }
 
     setValue(value: Value<T>) {
-        this.assignRelationsFromParentToMany(value);
+        this.historian.transaction(() => {
+            this.assignRelationsFromParentToMany(value);
 
-        super.setValue(value);
+            super.setValue(
+                createArrayProxy(this.historian, value)
+            );
+        });
     }
 
     contains(item: InstanceType<T>): boolean {
@@ -55,22 +60,26 @@ export default class HasMany<T extends typeof Model> extends Relation<T> {
             throw this.error(Error, 'Data integrity error: duplicate value encountered.', item);
         }
 
-        this.assignRelationsFromParent(item);
+        this.historian.transaction(() => {
+            this.assignRelationsFromParent(item);
 
-        this.value.push(item);
+            this.value.push(item);
 
-        const data = this.getDataFromParent() as Data<T>;
+            const data = this.getDataFromParent() as Data<T>;
 
-        data.push(item.data.getUntrackedData() as ModelDataType<T>);
+            data.push(item.data.getUntrackedData() as ModelDataType<T>);
+        })
     }
 
     remove(item: InstanceType<T>) {
-        if (arrayRemove(this.value, item)) {
-            const parentData = this.getDataFromParent() as Data<T>;
+        this.historian.transaction(() => {
+            if (arrayRemove(this.value, item)) {
+                const parentData = this.getDataFromParent() as Data<T>;
 
-            arrayRemove(parentData, item.getData());
-        } else {
-            this.warn('Data integrity warning: tried to remove an item that does not exist in the value', item);
-        }
+                arrayRemove(parentData, item.getData());
+            } else {
+                this.warn('Data integrity warning: tried to remove an item that does not exist in the value', item);
+            }
+        })
     }
 }

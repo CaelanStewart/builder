@@ -102,6 +102,15 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
                 // we don't cause infinite recursion.
                 return array.sort.call(proxy, comparator);
             });
+        },
+        includes(searchElement: any, fromIndex?: number) {
+            // Search on the original un-proxied version otherwise
+            // it will be compared with a proxy and return false
+            return array.includes(searchElement, fromIndex);
+        },
+        indexOf(searchElement: any, fromIndex?: number) {
+            // Same reason as 'includes' trap
+            return array.indexOf(searchElement, fromIndex);
         }
     };
 
@@ -110,7 +119,7 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
     const proxy = new Proxy(array, {
         get: (target: A, prop: string | symbol): any => {
             if (prop === PROXY) {
-                return true;
+                return array;
             }
 
             if (typeof prop === 'string') {
@@ -118,8 +127,10 @@ export function createArrayProxy<A extends any[]>(historian: Historian, array: A
 
                 // Ignored props
                 if (prop !== 'length' && prop !== 'constructor' && prop !== '__proto__') {
-                    if (prop in traps) {
-                        return traps[prop as keyof typeof traps];
+                    const trap = traps[prop as keyof typeof traps];
+
+                    if (trap) {
+                        return trap;
                     } else if (! noProxyGet && shouldProxyValue(value)) {
                         let proxy = children.get(value);
 

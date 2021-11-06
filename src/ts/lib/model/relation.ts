@@ -5,6 +5,7 @@ import Model, {
 } from '@/lib/model';
 import {isSubtype} from '@/lib/functions/type';
 import Morph, {TypeMap} from '@/lib/model/relation/morph';
+import Historian from '@/lib/model/historian';
 
 export type RelationValueType<T extends typeof Model,
     K extends keyof RelationTypes<T>, R extends RelationTypes<T> = RelationTypes<T>> = ReturnType<R[K]['getValue']>;
@@ -38,6 +39,7 @@ export default class Relation<T extends typeof Model> {
     protected value: ValueType<T>;
     protected types: TypeMap = {};
     protected defaultData?: () => DataType<T>;
+    protected historian: Historian;
 
     constructor({parent, type, name, prop, relations}: RelationOptions<T>) {
         this.parent = parent;
@@ -46,6 +48,7 @@ export default class Relation<T extends typeof Model> {
         this.prop = prop;
         this.relations = relations;
         this.value = null;
+        this.historian = parent.getHistorian();
 
         this.defineAccessor();
     }
@@ -103,9 +106,16 @@ export default class Relation<T extends typeof Model> {
     }
 
     public setValue(value: ValueType<T>) {
-        this.value = value;
+        this.historian.transaction(() => {
+            this.historian.do('set', {
+                object: this,
+                prop: 'value',
+                oldValue: this.value,
+                newValue: value
+            })
 
-        this.updateParentData();
+            this.updateParentData();
+        });
     }
 
     protected updateParentData(): void {

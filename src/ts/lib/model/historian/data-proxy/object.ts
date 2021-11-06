@@ -8,7 +8,7 @@ export function createObjectProxy<O extends { }>(historian: Historian, object: O
     return new Proxy(object, {
         get: (target: O, prop: string | symbol): any => {
             if (prop === PROXY) {
-                return true;
+                return object;
             }
 
             if (typeof prop === 'string') {

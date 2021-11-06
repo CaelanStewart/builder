@@ -14,38 +14,41 @@ export function createDemoBuilderModel(): Builder {
 
     console.log(`Created Historian (size: ${size}, epochTime: ${epochTime})`);
 
-    const builder = Builder.makeBuilder({
-        data: {
+    // Don't track initialisation
+    return historian.offTheRecord(() => {
+        const builder = Builder.makeBuilder({
+            data: {
+                //
+            },
+            history: historian,
+            components: getDefaultBlockComponentMap()
+        });
+
+        builder.container = builder.new(ContainerBlock, {
             //
-        },
-        history: historian,
-        components: getDefaultBlockComponentMap()
-    });
+        });
 
-    builder.container = builder.new(ContainerBlock, {
-        //
-    });
+        builder.container.children = [
+            builder.new(RowBlock, {}).tap(row => {
+                row.columns = [
+                    builder.new(ColumnBlock, {}).tap(col => {
+                        col.child = builder.new(TextBlock, {
+                            text: 'Test text',
+                            test: ['1', '2']
+                        })
+                    }),
+                    builder.new(ColumnBlock, {
 
-    builder.container.children = [
-        builder.new(RowBlock, {}).tap(row => {
-            row.columns = [
-                builder.new(ColumnBlock, {}).tap(col => {
-                    col.child = builder.new(TextBlock, {
-                        text: 'Test text',
-                        test: ['1', '2']
                     })
-                }),
-                builder.new(ColumnBlock, {
+                ]
+            }),
+            builder.new(ImageBlock, {
+                image: {
+                    src: './src/images/demo.png'
+                }
+            })
+        ];
 
-                })
-            ]
-        }),
-        builder.new(ImageBlock, {
-            image: {
-                src: './src/images/demo.png'
-            }
-        })
-    ];
-
-    return builder;
+        return builder;
+    });
 }

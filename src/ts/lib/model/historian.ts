@@ -3,6 +3,7 @@ import Almanac from '@/lib/model/historian/almanac';
 import createProxy, {Value as ProxyValue} from '@/lib/model/historian/data-proxy';
 import {classError} from '@/lib/functions/error';
 import createPublicPromise, {IPublicPromise} from '@/lib/async/public-promise';
+import {tap} from '@/lib/functions/shortcuts';
 
 interface AnyObject {
     [key: string]: any;
@@ -59,8 +60,6 @@ export interface ActionTransaction extends Action {
 
 export type ActionList = (Action | undefined)[];
 
-type Executor<T> = () => Promise<T>;
-
 type Transaction = Action[];
 type TransactionStack = Transaction[];
 
@@ -100,6 +99,8 @@ export default class Historian {
 
     private epochId: number|null = null;
 
+    private recordingDisabled: boolean = false;
+
     private readonly transformers: DirectionTransformerMap = {
         [UNDO]: {
             set(action) {
@@ -115,8 +116,9 @@ export default class Historian {
                 action.object[action.prop] = action.oldValue;
             },
             transaction(action) {
-                for (const transaction of action.stack) {
-                    this.applyTransaction(UNDO, transaction);
+                // Reverse order when undoing
+                for (let i = action.stack.length - 1; i >= 0; i--) {
+                    this.applyTransaction(UNDO, action.stack[i]);
                 }
             }
         },
@@ -143,29 +145,13 @@ export default class Historian {
 
     constructor(size: number = 50, private epochTime?: number) {
         this.almanac = new Almanac(size);
-
-        // if (this.batchInterval) {
-        //     this.startBatchInterval(this.batchInterval);
-        // }
     }
-
-    // startBatchInterval(interval: number): void {
-    //     if (this.batchTimerId) {
-    //         throw classError(this, 'A batch interval has already been started');
-    //     }
-    //
-    //     this.batchTimerId = setInterval(() => {
-    //
-    //     }, this.batchInterval ?? interval);
-    // }
 
     private newEpoch() {
         this.newTransaction();
 
         this.epochId = setTimeout(() => {
-            this.endTransaction();
-
-            this.epochId = null;
+            this.endEpoch();
         }, this.epochTime);
     }
 
@@ -173,11 +159,17 @@ export default class Historian {
         if (this.epochId) {
             clearTimeout(this.epochId);
 
+            this.epochId = null;
+
             this.endTransaction();
         }
     }
 
     public push(action: Action): void {
+        if (this.recordingDisabled) {
+            return;
+        }
+
         if (this.epochTime && this.transactionIndex === -1) {
             this.newEpoch();
         }
@@ -245,7 +237,7 @@ export default class Historian {
      * @param executor
      * @private
      */
-    public async asyncTransaction<T>(executor: Executor<T>): Promise<T> {
+    public async asyncTransaction<T>(executor: () => Promise<T>): Promise<T> {
         const transaction = this.newTransaction();
 
         try {
@@ -293,6 +285,21 @@ export default class Historian {
         }
     }
 
+    public disableRecording(): void {
+        this.recordingDisabled = true;
+    }
+
+    public enableRecording(): void {
+        this.recordingDisabled = false;
+    }
+
+    public offTheRecord<T>(executor: () => T): T {
+        this.disableRecording();
+        const ret = executor();
+        this.enableRecording();
+        return ret;
+    }
+
     public undo(): boolean {
         this.endEpoch();
 
@@ -327,8 +334,10 @@ export default class Historian {
     }
 
     private applyTransaction(direction: Direction, transaction: Transaction) {
-        for (const action of transaction) {
-            this.applyAction(direction, action);
+        const len = transaction.length;
+
+        for (let i = direction === UNDO ? len - 1 : 0; i >= 0 && i < len; i += direction) {
+            this.applyAction(direction, transaction[i]);
         }
     }
 }
