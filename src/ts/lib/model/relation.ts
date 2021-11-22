@@ -6,6 +6,7 @@ import Model, {
 import {isSubtype} from '@/lib/functions/type';
 import Morph, {TypeMap} from '@/lib/model/relation/morph';
 import Historian from '@/lib/model/historian';
+import {error} from '@/lib/functions/error';
 
 export type RelationValueType<T extends typeof Model,
     K extends keyof RelationTypes<T>, R extends RelationTypes<T> = RelationTypes<T>> = ReturnType<R[K]['getValue']>;
@@ -26,7 +27,6 @@ export interface RelationOptions<T extends typeof Model> {
     name: string;
     prop?: string;
     relations?: Partial<RelationValueTypes<T>>;
-
     defaultData?(): DataType<T>;
 }
 
@@ -37,7 +37,7 @@ export default class Relation<T extends typeof Model> {
     protected prop?: string;
     protected relations?: Partial<RelationValueTypes<T>>;
     protected value: ValueType<T>;
-    protected types: TypeMap = {};
+    protected types: TypeMap = { };
     protected defaultData?: () => DataType<T>;
     protected historian: Historian;
 
@@ -147,11 +147,9 @@ export default class Relation<T extends typeof Model> {
             return data;
         }
 
-        throw this.error(
-            TypeError,
-            `Data integrity error: invalid data encountered on parent for prop ${this.prop}`,
-            data
-        );
+        throw error(TypeError).on(this).log(data)
+            .msg(`Data integrity error: invalid data encountered on parent for prop ${this.prop}`)
+            .get();
     }
 
     public validateType(type: any): type is T {

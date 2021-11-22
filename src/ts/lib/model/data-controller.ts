@@ -15,9 +15,9 @@ export default class DataController<T extends IModelData = IModelData> {
         // changes made to properties on the raw un-proxied data object.
         const reactive = ref<T>(data);
 
-        this.data = box(reactive.value);
+        // Box these values so Vue cannot see them and they aren't made reactive
         this.historian = box(historian);
-
+        this.data = box(reactive.value);
         this.proxy = box(createProxy(this.historian.get(), this.data.get()));
     }
 

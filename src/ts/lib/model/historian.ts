@@ -1,9 +1,6 @@
 import {arrayRemoveAll} from '@/lib/functions/array';
 import Almanac from '@/lib/model/historian/almanac';
-import createProxy, {Value as ProxyValue} from '@/lib/model/historian/data-proxy';
-import {classError} from '@/lib/functions/error';
-import createPublicPromise, {IPublicPromise} from '@/lib/async/public-promise';
-import {tap} from '@/lib/functions/shortcuts';
+import {error} from '@/lib/functions/error';
 
 interface AnyObject {
     [key: string]: any;
@@ -85,7 +82,7 @@ type DirectionTransformerMap = {
  * @param entry
  */
 export const isAction = <TypeName extends Action['type'], ActionType extends ActionTypeMap[TypeName]>
-    (type: TypeName, entry: Action): entry is ActionType => entry.type === type;
+(type: TypeName, entry: Action): entry is ActionType => entry.type === type;
 
 const UNDO: Undo = -1;
 const REDO: Redo = 1;
@@ -97,7 +94,7 @@ export default class Historian {
 
     private transactionIndex: number = -1;
 
-    private epochId: number|null = null;
+    private epochId: number | null = null;
 
     private recordingDisabled: boolean = false;
 
@@ -214,7 +211,7 @@ export default class Historian {
         this.push(action);
     }
 
-    public handleTransactionError(transaction: Transaction, error: unknown) {
+    private handleTransactionError(transaction: Transaction, error: unknown) {
         // Undo this current level of transaction here, allowing the rethrown
         // error to be caught, and a higher-order transaction to continue.
         this.applyTransaction(UNDO, transaction);
@@ -229,6 +226,25 @@ export default class Historian {
         ++this.transactionIndex;
 
         return transaction;
+    }
+
+    private endTransaction() {
+        if (this.transactionIndex < 0) {
+            throw error(RangeError)
+                .on(this).msg('Integrity error – cannot end transaction, no transactions are in progress');
+        }
+
+        --this.transactionIndex;
+
+        // If we're at the top (given the above increment) then we need to
+        // commit this transaction which has executed without exceptions.
+        if (this.transactionIndex === -1) {
+            // Commit directly to the almanac so we don't start a new
+            // epoch, getting stuck in a loop and never committing.
+            this.almanac.commit(this.createAction('transaction', {
+                stack: arrayRemoveAll(this.transactions)
+            }));
+        }
     }
 
     /**
@@ -251,20 +267,6 @@ export default class Historian {
 
             // Allow error to be dealt with or to propagate up to any parent transactions
             throw error;
-        }
-    }
-
-    private endTransaction() {
-        --this.transactionIndex;
-
-        // If we're at the top (given the above increment) then we need to
-        // commit this transaction which has executed without exceptions.
-        if (this.transactionIndex === -1) {
-            // Commit directly to the almanac so we don't start a new
-            // epoch, getting stuck in a loop and never committing.
-            this.almanac.commit(this.createAction('transaction', {
-                stack: arrayRemoveAll(this.transactions)
-            }));
         }
     }
 
@@ -336,6 +338,7 @@ export default class Historian {
     private applyTransaction(direction: Direction, transaction: Transaction) {
         const len = transaction.length;
 
+        // Iterate the array in the same direction as the action
         for (let i = direction === UNDO ? len - 1 : 0; i >= 0 && i < len; i += direction) {
             this.applyAction(direction, transaction[i]);
         }

@@ -7,14 +7,17 @@
     "jsx": "preserve",
     "moduleResolution": "node",
     "importHelpers": true,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "allowJs": true,
     "baseUrl": ".",
     "sourceMap": true,
     "paths": {
       "@/*": [
         "./src/ts/*"
+      ],
+      "@svg/*": [
+        "./src/svg/*"
       ]
     },
     "lib": [
