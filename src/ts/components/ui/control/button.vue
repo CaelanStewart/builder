@@ -17,7 +17,8 @@
         },
 
         props: {
-            svg: [String, Promise] as PropType<string | Promise<string>>
+            svg: [String, Promise] as PropType<string | Promise<string>>,
+            icon: String
         }
     })
 </script>

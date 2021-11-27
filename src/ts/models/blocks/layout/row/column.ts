@@ -1,4 +1,4 @@
-import Block, {IBlockData, IBlockOptions, Historian, Arg, IBlockCapabilities} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Historian, DataType, IBlockCapabilities} from '@/models/block';
 
 export interface IColumnBlockCapabilities extends IBlockCapabilities {
 
@@ -14,7 +14,7 @@ export interface IColumnBlockData extends IBlockData {
     test: string;
 }
 
-export default class ColumnBlock<MD extends Arg<IColumnBlockData> = Arg<IColumnBlockData>, O extends Arg<IColumnBlockOptions> = Arg<IColumnBlockOptions>> extends Block<MD, O> {
+export default class ColumnBlock<MD extends DataType<IColumnBlockData> = DataType<IColumnBlockData>, O extends DataType<IColumnBlockOptions> = DataType<IColumnBlockOptions>> extends Block<MD, O> {
     static readonly type = 'column';
 
     child: Block | null = null;

@@ -1,4 +1,4 @@
-import Block, {IBlockData, IBlockOptions, Historian, Arg, IBlockCapabilities} from '@/models/block';
+import Block, {IBlockData, IBlockOptions, Historian, DataType, IBlockCapabilities} from '@/models/block';
 import Image, {IImageData} from '@/models/media/image';
 
 export interface IImageBlockOptions extends IBlockOptions {
@@ -11,7 +11,7 @@ export interface IImageBlockData extends IBlockData {
     options?: IImageBlockOptions;
 }
 
-export default class ImageBlock<MD extends Arg<IImageBlockData> = IImageBlockData, O extends Arg<IImageBlockOptions> = Arg<IImageBlockOptions>> extends Block<MD, O> {
+export default class ImageBlock<MD extends DataType<IImageBlockData> = IImageBlockData, O extends DataType<IImageBlockOptions> = DataType<IImageBlockOptions>> extends Block<MD, O> {
     static readonly type = 'image';
 
     public image: Image|null = null;

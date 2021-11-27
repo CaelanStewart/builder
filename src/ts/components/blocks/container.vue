@@ -1,12 +1,13 @@
 <template>
     <abstract-block :block="block">
-        <block-list :children="block.children" />
+        <block-list :children="block.children" class="container" :class="classes" />
     </abstract-block>
 </template>
 
 <script lang="ts">
     // Modules
-    import {defineComponent, computed} from 'vue';
+    import {defineComponent} from 'vue';
+    import useClasses from '@/composable/block/classes';
 
     // Models
     import ContainerBlock from '@/models/blocks/container';
@@ -21,11 +22,22 @@
         components: {BlockList, AbstractBlock},
 
         props: {
-            block: ContainerBlock
+            block: {
+                type: ContainerBlock,
+                required: true
+            }
         },
 
         setup(props) {
-
+            return {
+                classes: useClasses(props.block, () => ({
+                    align: {
+                        'ml-auto': 'start',
+                        'mx-auto': 'center',
+                        'mr-auto': 'end',
+                    }
+                }))
+            }
         }
     });
 </script>

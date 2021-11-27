@@ -1,6 +1,6 @@
 import ContainerBlock, {IContainerBlockData} from '@/models/blocks/container';
-import Block, {IBlockData, IBlockOptions, Arg, Historian} from '@/models/block';
-import {ComponentMap} from '@/types/vue/component';
+import Block, {IBlockData, IBlockOptions, DataType, Historian} from '@/models/block';
+import {ComponentMap} from '@/types/vue/component-map';
 
 export interface EditMode {
     // permissions?: {
@@ -18,7 +18,7 @@ export interface IBuilderData extends IBlockData {
     options?: IBuilderOptions;
 }
 
-export default class Builder<MD extends Arg<IBuilderData> = IBuilderData, O extends Arg<IBuilderOptions> = Arg<IBuilderOptions>> extends Block<MD, O> {
+export default class Builder<MD extends DataType<IBuilderData> = IBuilderData, O extends DataType<IBuilderOptions> = DataType<IBuilderOptions>> extends Block<MD, O> {
     public container: ContainerBlock|null = null;
 
     static readonly type: string = 'builder';

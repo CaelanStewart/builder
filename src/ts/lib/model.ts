@@ -13,7 +13,7 @@ export interface IModelData {
 
 // This must be used in for the types of Model data object in derived Models so
 // that the construct signatures are all compatible between the derived types.
-export type Arg<D> = Partial<Omit<D, keyof IModelData>> & IModelData;
+export type DataType<D> = Partial<Omit<D, keyof IModelData>> & IModelData;
 
 export type DataObject = {[prop: string]: any};
 

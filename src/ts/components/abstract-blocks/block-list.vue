@@ -8,7 +8,7 @@
     import {defineComponent, ref, PropType, computed} from 'vue';
     import {getComponentMap} from '@/composable/block';
     import Block from '@/models/block';
-    import {ComponentMap} from '@/types/vue/component';
+    import {ComponentMap} from '@/types/vue/component-map';
 
     export default defineComponent({
         name: 'block-list',

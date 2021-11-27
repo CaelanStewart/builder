@@ -1,3 +1,5 @@
-@import '~bulma';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @import 'components/ui/menus/toolbar';

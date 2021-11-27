@@ -1,11 +1,16 @@
-import Model, {IModelData, DataController, Historian, InstanceDataType, Arg, ModelDataType} from '@/lib/model';
+import Model, {IModelData, DataController, Historian, InstanceDataType, DataType, ModelDataType} from '@/lib/model';
 import {IImageBlockData} from '@/models/blocks/image';
 import {IContainerBlockData} from '@/models/blocks/container';
-import {ComponentMap} from '@/types/vue/component';
+import {ComponentMap} from '@/types/vue/component-map';
 import {Box, box} from '@/lib/functions/util';
 
-type BlockOptionsType<M extends Block> = Required<InstanceDataType<M>['options']>;
-type BlockOptionType<M extends Block, K extends keyof BlockOptionsType<M>> = BlockOptionsType<M>[K];
+// This must be used in for the types of Model data object in derived Models so
+// that the construct signatures are all compatible between the derived types.
+export type BDataType<D extends IBlockData> = Partial<Omit<D, keyof IBlockData>> & Omit<IBlockData, 'options'> & {options?: Partial<IBlockData['options']>};
+
+export type BlockOptionsType<M extends Block> = ReturnType<M['getOptions']>;
+export type BlockOptionType<M extends Block, K extends keyof BlockOptionsType<M>> = BlockOptionsType<M>[K];
+export type BlockOptionKey<M extends Block> = keyof BlockOptionsType<M>;
 
 export interface IHasChildren<T extends Block = Block> {
     children: T[];
@@ -28,9 +33,9 @@ export interface IBlockCapabilities {
 
 export type TAnyBlockData = IContainerBlockData | IImageBlockData;
 
-export {DataController, Historian, Arg};
+export {DataController, Historian, DataType};
 
-export default class Block<MD extends Arg<IBlockData> = Arg<IBlockData>, O extends Arg<IBlockOptions> = Arg<IBlockOptions>> extends Model<MD> {
+export default class Block<MD extends DataType<IBlockData> = DataType<IBlockData>, O extends DataType<IBlockOptions> = DataType<IBlockOptions>> extends Model<MD> {
     protected static componentMap: Box<ComponentMap> = box({});
 
     protected componentMap: Box<ComponentMap>;
@@ -51,7 +56,7 @@ export default class Block<MD extends Arg<IBlockData> = Arg<IBlockData>, O exten
         })
     }
 
-    private readonly options: O;
+    public readonly options: O;
 
     constructor(data: {[prop: string]: any}, history: Historian) {
         super(data as MD, history);

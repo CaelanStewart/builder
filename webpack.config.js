@@ -1,10 +1,24 @@
 // webpack config
 const path = require('path');
+const fs = require('fs');
 const WebpackBar = require('webpackbar');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { VueLoaderPlugin } = require('vue-loader');
-const autoprefixer = require('autoprefixer');
+
+const exportTailwindConfig = () => {
+    const {theme, variants, darkMode} = require('./tailwind.config.js');
+    const config = {theme, variants, darkMode};
+    fs.writeFileSync(path.resolve(__dirname, 'dist/tailwind.json'), JSON.stringify(config));
+};
+
+fs.watchFile(path.resolve(__dirname, 'tailwind.config.js'), () => {
+    console.log('[Builder]: Tailwind configuration was changed – exporting configuration');
+    exportTailwindConfig();
+});
+
+console.log('[Builder]: Exporting Tailwind configuration');
+exportTailwindConfig();
 
 module.exports = (env = {}) => ({
     context: path.resolve(__dirname, 'src'),
@@ -19,6 +33,10 @@ module.exports = (env = {}) => ({
         publicPath: process.env.BASE_URL,
     },
     module: {
+        // Unfortunately something seems to be causing webpack to throw the
+        // warning: "Critical dependency: the request of a dependency is
+        // an expression" when importing SVGs with svg-inline-loader.
+        exprContextCritical: false,
         rules: [
             {
                 test: /\.vue$/,
@@ -54,19 +72,15 @@ module.exports = (env = {}) => ({
                         loader: MiniCssExtractPlugin.loader,
                         options: { hmr: !env.production }
                     },
-                    'css-loader',
                     {
-                        loader: 'postcss-loader',
+                        loader: 'css-loader',
                         options: {
+                            url: false,
                             sourceMap: true,
-                            postcssOptions: {
-                                ident: 'postcss0',
-                                plugins: [
-                                    autoprefixer()
-                                ]
-                            }
+                            importLoaders: 1
                         }
                     },
+                    'postcss-loader'
                 ]
             },
             {
@@ -78,23 +92,10 @@ module.exports = (env = {}) => ({
                         options: {
                             url: false,
                             sourceMap: true,
-                            // Modules must be set to `false` otherwise, class names will be changed to random strings
-                            modules: false,
                             importLoaders: 1
                         }
                     },
-                    {
-                        loader: 'postcss-loader',
-                        options: {
-                            sourceMap: true,
-                            postcssOptions: {
-                                ident: 'postcss0',
-                                plugins: [
-                                    autoprefixer()
-                                ]
-                            }
-                        }
-                    },
+                    'postcss-loader',
                     {
                         loader: 'sass-loader',
                         options: {

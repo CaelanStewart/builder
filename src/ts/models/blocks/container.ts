@@ -2,7 +2,7 @@ import Block, {
     TAnyBlockData,
     IBlockOptions,
     IHasChildren,
-    Arg
+    DataType, BDataType
 } from '@/models/block';
 import BlockList, {IBlockListCapabilities, IBlockListData} from '@/models/block/block-list';
 
@@ -11,7 +11,7 @@ export interface IContainerBlockCapabilities extends IBlockListCapabilities {
 }
 
 export interface IContainerBlockOptions extends IBlockOptions {
-    //
+    align: 'start' | 'center' | 'end';
 }
 
 export interface IContainerBlockData extends IBlockListData {
@@ -19,7 +19,7 @@ export interface IContainerBlockData extends IBlockListData {
     options?: IContainerBlockOptions;
 }
 
-export default class ContainerBlock<MD extends Arg<IContainerBlockData> = IContainerBlockData, O extends Arg<IContainerBlockOptions> = Arg<IContainerBlockOptions>> extends BlockList<MD, O> implements IHasChildren {
+export default class ContainerBlock<MD extends BDataType<IContainerBlockData> = BDataType<IContainerBlockData>, O extends DataType<IContainerBlockOptions> = DataType<IContainerBlockOptions>> extends BlockList<MD, O> implements IHasChildren {
     static readonly type = 'container';
 
     public children: Block[] = [];
@@ -32,7 +32,10 @@ export default class ContainerBlock<MD extends Arg<IContainerBlockData> = IConta
         })
     }
 
-    public test() {
-        this.can('editChildren');
+    getDefaultOptions(): IContainerBlockOptions {
+        return {
+            ...super.getDefaultOptions(),
+            align: 'center'
+        };
     }
 }

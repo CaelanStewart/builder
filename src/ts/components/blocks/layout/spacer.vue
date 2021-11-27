@@ -1,6 +1,6 @@
 <template>
     <abstract-block :block="block">
-        <block-list :children="block.columns" :component-map="{}" class="flex flex-row" />
+
     </abstract-block>
 </template>
 
@@ -9,19 +9,18 @@
     import {defineComponent, computed, PropType} from 'vue';
 
     // Models
-    import RowBlock from '@/models/blocks/layout/row';
+    import SpacerBlock from '@/models/blocks/layout/spacer';
 
     // Components
     import AbstractBlock from '@/components/abstract-blocks/abstract-block.vue';
-    import BlockList from '@/components/abstract-blocks/block-list.vue';
 
     export default defineComponent({
-        name: 'block-row',
+        name: 'block-spacer',
 
-        components: {BlockList, AbstractBlock},
+        components: {AbstractBlock},
 
         props: {
-            block: RowBlock as PropType<RowBlock>
+            block: SpacerBlock as PropType<SpacerBlock>
         },
 
         setup(props) {

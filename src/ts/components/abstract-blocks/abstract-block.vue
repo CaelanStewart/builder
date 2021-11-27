@@ -1,6 +1,6 @@
 <template>
-    <div ref="element" class="block" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
-        <teleport v-if="true" to="body">
+    <div ref="element" :class="classes" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+        <teleport v-if="isMouseOver" to="body">
             <ui-toolbar :block="block" />
         </teleport>
 

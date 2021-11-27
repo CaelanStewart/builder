@@ -1,12 +1,15 @@
 <template>
-    <abstract-block :block="block">
-        <block-list v-if="block.child" :children="[block.child]" :component-map="block.getComponentMap()" />
+    <abstract-block :block="block" class="flex-1">
+        <block-list
+            v-if="block.child"
+            :children="[block.child]"
+            :component-map="block.getComponentMap()" />
     </abstract-block>
 </template>
 
 <script lang="ts">
     // Modules
-    import {defineComponent, computed, PropType} from 'vue';
+    import {defineComponent, PropType} from 'vue';
 
     // Components
     import AbstractBlock from '@/components/abstract-blocks/abstract-block.vue';
