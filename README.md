@@ -19,5 +19,6 @@ I'd like to see a multi-purpose layout/page builder that satisfies the following
     - "advanced" - which allows full access to edit the layout, margins, paddings, responsiveness breakpoints, colours etc.
  - Permissions can be defined hierarchically for each and every element/option
  - Customisable responsiveness
- - Mobile-first, using Bulma for the style framework
+ - Mobile-first, using Tailwind for the style framework
+ - Deep integration into Tailwind's themeing and customisation options by runtime introspection of the Tailwind configuration
  - When it is eventually built into a CMS, it'd optimally support server-side rendering, whilst allowing interactive components to remain rendered in the browser
